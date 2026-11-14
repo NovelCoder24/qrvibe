@@ -23,6 +23,7 @@ import {
  *    - 1-3 Stars: Private WhatsApp Shield routing dissatisfied guests directly to owner with voucher/resolution.
  */
 const ReviewFunnel = ({
+    shortId = '',
     businessCategory = 'salon',
     restaurantName = 'Our Cafe',
     googleReviewUrl = '',
@@ -35,6 +36,8 @@ const ReviewFunnel = ({
     const [hoverRating, setHoverRating] = useState(0);
     const [copiedIndex, setCopiedIndex] = useState(null);
     const [isPillDismissed, setIsPillDismissed] = useState(false);
+    const [showVoucher, setShowVoucher] = useState(false);
+    const [voucherSaved, setVoucherSaved] = useState(false);
     const v = getVocabulary(businessCategory);
     
     // Low rating (1-3 stars) shield state
@@ -128,9 +131,31 @@ const ReviewFunnel = ({
             window.open(targetUrl, '_blank', 'noopener,noreferrer');
         }, 350);
 
+        // Open ₹200 WhatsApp Privilege Pass celebration screen
+        setTimeout(() => {
+            setShowVoucher(true);
+        }, 600);
+
         setTimeout(() => {
             setCopiedIndex(null);
         }, 4000);
+    };
+
+    // Save ₹200 Privilege Pass on WhatsApp
+    const handleSaveVoucherWhatsApp = () => {
+        if (!cleanPhone) {
+            if (navigator?.clipboard?.writeText) {
+                navigator.clipboard.writeText(`Privilege Pass VIBE200 - ₹200 off at ${restaurantName}`);
+            }
+            alert(`₹200 Privilege Pass (Code: VIBE200) saved! Present this code at ${restaurantName} checkout.`);
+            setVoucherSaved(true);
+            return;
+        }
+
+        const message = `Hi ${restaurantName}! I just reviewed your salon on Google Maps. 🎉\n\nPlease save my ₹200 Privilege Pass (Code: VIBE200) for my next visit!\n\nName: `;
+        const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
+        setVoucherSaved(true);
     };
 
     // Open Private WhatsApp Shield
@@ -236,6 +261,7 @@ const ReviewFunnel = ({
                                 type="button"
                                 onClick={() => {
                                     setIsModalOpen(false);
+                                    setShowVoucher(false);
                                     setRating(0);
                                 }}
                                 className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -246,8 +272,97 @@ const ReviewFunnel = ({
 
                         {/* Modal Body */}
                         <div className="p-6 space-y-6">
+                            {showVoucher ? (
+                                /* ═══════════════════════════════════════════════════
+                                   POST-REVIEW: ₹200 PRIVILEGE PASS CELEBRATION SCREEN
+                                   ═══════════════════════════════════════════════════ */
+                                <div className="space-y-5 animate-in zoom-in-95 duration-200">
+                                    <div className="text-center space-y-2">
+                                        <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-600 text-2xl font-black shadow-inner">
+                                            🎉
+                                        </div>
+                                        <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                                            Review Copied &amp; Maps Opened!
+                                        </h2>
+                                        <p className="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
+                                            Paste your review in Google Maps and submit. Here is your <strong>₹200 Privilege Pass</strong> for your next visit at {restaurantName}!
+                                        </p>
+                                    </div>
 
-                            {/* Question & 5-Star Rating Control */}
+                                    {/* The Luxury ₹200 Privilege Pass Card */}
+                                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#2B1E19] via-[#3D2C25] to-[#1C1310] p-5 text-white border-2 border-[#E5A93C]/80 shadow-xl space-y-4">
+                                        {/* Top gold header */}
+                                        <div className="flex items-center justify-between border-b border-[#E5A93C]/30 pb-2.5">
+                                            <div className="flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-[#E5A93C]" />
+                                                <span className="text-[10px] font-mono tracking-widest uppercase text-[#E5A93C] font-black">
+                                                    Privilege Pass
+                                                </span>
+                                            </div>
+                                            <span className="text-[10px] font-mono font-bold text-amber-200 bg-[#E5A93C]/20 px-2 py-0.5 rounded-full border border-[#E5A93C]/40">
+                                                CODE: VIBE200
+                                            </span>
+                                        </div>
+
+                                        {/* Pass Amount & Headline */}
+                                        <div className="text-center py-2 space-y-1">
+                                            <div className="text-4xl font-black tracking-tight font-serif text-[#E5A93C] drop-shadow-sm">
+                                                ₹200 OFF
+                                            </div>
+                                            <div className="text-xs font-semibold text-slate-200">
+                                                Valid on your next visit at {restaurantName}
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 font-normal">
+                                                Valid for 60 days on any treatment, styling, or service
+                                            </p>
+                                        </div>
+
+                                        {/* Bottom barcode decoration */}
+                                        <div className="pt-2 border-t border-[#E5A93C]/20 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                                            <span>VERIFIED GUEST REWARD</span>
+                                            <span className="tracking-widest">||||| | |||| |||</span>
+                                        </div>
+                                    </div>
+
+                                    {/* WhatsApp Claim CTA */}
+                                    <div className="space-y-2.5">
+                                        <button
+                                            type="button"
+                                            onClick={handleSaveVoucherWhatsApp}
+                                            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer active:scale-95 ${
+                                                voucherSaved 
+                                                    ? 'bg-emerald-700 text-white shadow-emerald-700/30' 
+                                                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                                            }`}
+                                        >
+                                            <MessageCircle className="w-4 h-4 fill-white text-emerald-600" />
+                                            <span>
+                                                {voucherSaved 
+                                                    ? '✓ Pass Sent to WhatsApp!' 
+                                                    : 'Tap to Save ₹200 Voucher on WhatsApp'}
+                                            </span>
+                                        </button>
+
+                                        <p className="text-[10px] text-slate-500 text-center leading-relaxed">
+                                            💬 Sends your voucher to our salon WhatsApp so reception applies ₹200 off your next billing.
+                                        </p>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsModalOpen(false);
+                                                setShowVoucher(false);
+                                                setRating(0);
+                                            }}
+                                            className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 font-semibold text-center transition-colors cursor-pointer"
+                                        >
+                                            Done &amp; Return to Lookbook
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Question & 5-Star Rating Control */}
                             <div className="text-center space-y-3">
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
                                     <Sparkles className="w-3.5 h-3.5 text-amber-500" /> 10-Second Feedback
@@ -436,9 +551,10 @@ const ReviewFunnel = ({
                                     )}
                                 </div>
                             )}
-
-                        </div>
-                    </div>
+                        </>
+                    )}
+                </div>
+            </div>
                 </div>
             )}
         </>

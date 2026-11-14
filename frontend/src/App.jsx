@@ -92,6 +92,7 @@ const App = () => {
           <Route path="/social/:shortId" element={<SocialViewPage />} />
           <Route path="/media/:shortId" element={<MediaViewPage />} />
           <Route path="/menu/:shortId" element={<MenuViewPage />} /> 
+          <Route path="/s/:shortId" element={<MenuViewPage />} /> 
           <Route path="/activate" element={<StandeeActivationPage />} />
           <Route path="/activate/:code" element={<StandeeActivationPage />} />
 

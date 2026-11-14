@@ -25,7 +25,8 @@ import {
   Lock,
   Mail,
   User as UserIcon,
-  HelpCircle
+  HelpCircle,
+  Printer
 } from 'lucide-react';
 import api, { parseMenuPhotos } from '../api/axios';
 import { login, register, loginSuccess } from '../redux/authSlice';
@@ -521,6 +522,61 @@ export default function StandeeActivationPage() {
     const liveShortId = activationSuccessData.standee?.short_id || activationSuccessData.qr?.short_id;
     const finalMenuUrl = activationSuccessData.menuUrl || `${window.location.origin}/menu/${liveShortId}`;
     const finalScanUrl = activationSuccessData.liveUrl || `${window.location.origin}/r/${liveShortId}`;
+    const printCode = activationSuccessData.standee?.kit_code || kitCodeInput || "BOX-01";
+    const printStation = activationSuccessData.standee?.station_label || currentStationName || "Reception Counter";
+    const storeName = authName || user?.name || "Aura Salon";
+
+    const handlePrintStandee = () => {
+      const w = window.open("", "_blank");
+      if (!w) {
+        alert("Please allow pop-ups to print your 4×6 standee card");
+        return;
+      }
+      w.document.write(`<!doctype html><html><head><title>4x6 Standee • ${storeName} • ${printCode}</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Instrument+Sans:wght@500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+        <style>
+          @page { size: 4in 6in; margin: 0; }
+          body { margin: 0; display: grid; place-items: center; min-height: 100vh; background: #EAE4DC; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .card { width: 4in; height: 6in; background: #2B1E19; color: #FBF9F6; padding: 0.34in; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; border: 2px solid #E5A93C; border-radius: 8px; }
+        </style></head><body>
+        <div class="card">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#E5A93C">${storeName}</div>
+              <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#CDBFB2;background:rgba(229,169,60,0.15);padding:3px 8px;border-radius:4px;border:1px solid rgba(229,169,60,0.3)">${printCode} • ${printStation}</div>
+            </div>
+            <div style="font:400 24px/1.15 'Instrument Serif',Georgia,serif;margin-top:8px;color:#FBF9F6">Scan for Today's In-Chair Offers &amp; Unlock ₹200 Off Your Next Visit</div>
+          </div>
+          <div style="background:#FBF9F6;padding:14px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.25);display:flex;justify-content:center;">
+            <div id="qr-target"></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="color:#E5A93C;letter-spacing:3px;font-size:14px">★★★★★</span>
+              <span style="font:600 11px 'Instrument Sans',sans-serif;color:#E5A93C;background:rgba(229,169,60,0.15);padding:2px 8px;border-radius:4px">Claim ₹200 Privilege Pass on WhatsApp</span>
+            </div>
+            <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:#CDBFB2;display:flex;justify-content:space-between;border-top:1px solid rgba(229,169,60,0.2);padding-top:6px">
+              <span>📷 Open Phone Camera to Scan (Not GPay)</span>
+              <span>qrvibe.in/r/${liveShortId}</span>
+            </div>
+          </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"><\/script>
+        <script>
+          const qr = new QRCodeStyling({
+            width: 250,
+            height: 250,
+            type: "svg",
+            data: "${finalScanUrl}",
+            dotsOptions: { color: "#2B1E19", type: "rounded" },
+            cornersSquareOptions: { color: "#2B1E19", type: "extra-rounded" },
+            cornersDotOptions: { color: "#E5A93C" }
+          });
+          qr.append(document.getElementById("qr-target"));
+          onload=()=>setTimeout(()=>window.print(),500);
+        <\/script></body></html>`);
+      w.document.close();
+    };
 
     return (
       <div className="min-h-screen bg-[#FBF9F6] text-[#2B1E19] px-4 py-8 md:py-12 flex flex-col items-center justify-center font-sans">
@@ -575,6 +631,14 @@ export default function StandeeActivationPage() {
 
           {/* Action CTAs */}
           <div className="space-y-3 max-w-sm mx-auto">
+            <button
+              onClick={handlePrintStandee}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#E5A93C] text-[#2B1E19] text-sm font-semibold hover:bg-[#d89e34] transition-all shadow-md group cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-[#2B1E19] group-hover:scale-110 transition-transform" />
+              🖨️ Print 4×6 Standee Card
+            </button>
+
             <a
               href={finalMenuUrl}
               target="_blank"
