@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { register, login, googleLogin, clearError, setAuthError } from '../redux/authSlice';
+import { register, login, googleLogin, clearError, setAuthError, setGoogleReviewUrl } from '../redux/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import api from '../api/axios';
@@ -68,6 +68,7 @@ const RegisterPage = () => {
     const [customChipInput, setCustomChipInput] = useState('');
     const [city, setCity] = useState('');
     const [standeeHeadline, setStandeeHeadline] = useState(categoryPresets.salon.headline);
+    const [googleReviewUrl, setGoogleReviewUrl] = useState('');
     const [slug, setSlug] = useState('aura-hair-spa');
     const [selectedPlan, setSelectedPlan] = useState('bundle');
     const [shippingAddress, setShippingAddress] = useState('');
@@ -234,9 +235,11 @@ const RegisterPage = () => {
         if (stepNumber === 2) {
             const headlineValid = standeeHeadline.trim().length >= 3;
             const slugValid = slug.trim().length >= 2;
+            const reviewUrlValid = googleReviewUrl.trim().length >= 4;
             triggerFieldError('standeeHeadline', !headlineValid);
             triggerFieldError('slugInput', !slugValid);
-            if (!headlineValid || !slugValid) valid = false;
+            triggerFieldError('googleReviewUrl', !reviewUrlValid);
+            if (!headlineValid || !slugValid || !reviewUrlValid) valid = false;
         }
 
         if (stepNumber === 3) {
@@ -282,8 +285,10 @@ const RegisterPage = () => {
                 name: registeredUser.name || ownerName,
                 whatsappNumber: registeredUser.whatsapp || whatsappNumber,
                 businessCategory: currentCat,
-                workspaceMode: 'storefront'
+                workspaceMode: 'storefront',
+                googleReviewUrl: googleReviewUrl.trim()
             });
+            dispatch(setGoogleReviewUrl(googleReviewUrl.trim()));
         } catch (err) {
             console.warn("Profile sync warning (continuing to success view):", err);
         }
@@ -702,6 +707,26 @@ const RegisterPage = () => {
                                                 required
                                             />
                                             <span className={`error-msg ${fieldErrors.standeeHeadline ? 'show' : ''}`}>Please add a short headline.</span>
+                                        </div>
+
+                                        <div className="field-group">
+                                            <div className="field-label">
+                                                <label className="lbl" htmlFor="googleReviewUrl">Google Review Link or Place ID <span className="req-star">*</span></label>
+                                                <span className="hint">Where 5★ reviews will be submitted</span>
+                                            </div>
+                                            <input
+                                                type="url"
+                                                id="googleReviewUrl"
+                                                value={googleReviewUrl}
+                                                onChange={(e) => {
+                                                    setGoogleReviewUrl(e.target.value);
+                                                    triggerFieldError('googleReviewUrl', false);
+                                                }}
+                                                className={`reg-input ${fieldErrors.googleReviewUrl ? 'input-error' : ''} ${shakingFields.googleReviewUrl ? 'shake' : ''}`}
+                                                placeholder="e.g., https://g.page/r/.../review or Google Maps URL"
+                                                required
+                                            />
+                                            <span className={`error-msg ${fieldErrors.googleReviewUrl ? 'show' : ''}`}>Please enter your Google Maps review link or place ID.</span>
                                         </div>
 
                                         <div className="field-group">

@@ -144,13 +144,13 @@ function Topbar({ onToggleSidebar }) {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur lg:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-[#E3DAD0] bg-[#FBF9F6]/95 px-4 backdrop-blur lg:px-6">
       <div className="flex min-w-0 items-center gap-3">
-        <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation" onClick={onToggleSidebar}>
+        <Button variant="ghost" size="icon" className="lg:hidden text-[#2B1E19] hover:bg-[#F3EDE4]" aria-label="Open navigation" onClick={onToggleSidebar}>
           <Menu className="h-5 w-5" />
         </Button>
         <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold text-foreground">{pageLabel}</h1>
+          <h1 className="truncate text-base font-semibold text-[#2B1E19] font-['Instrument_Sans',sans-serif]">{pageLabel}</h1>
         </div>
       </div>
 
@@ -257,26 +257,29 @@ function Topbar({ onToggleSidebar }) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-9 w-9 rounded-full p-0" aria-label="User menu">
               <Avatar className="h-9 w-9">
-                <AvatarFallback className="bg-slate-900 text-white">{getInitials(user)}</AvatarFallback>
+                <AvatarFallback className="bg-[#2B1E19] text-[#E5A93C] font-semibold text-xs">{getInitials(user)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 border-[#E3DAD0] bg-[#FBF9F6]">
             <DropdownMenuLabel>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{user?.name || 'QRVibe User'}</p>
-                <p className="truncate text-xs font-normal text-muted-foreground">{user?.email || 'Signed in'}</p>
+                <p className="truncate text-sm font-semibold text-[#2B1E19]">{user?.name || 'QRVibe Storefront'}</p>
+                <p className="truncate text-xs font-normal text-[#6B5A50]">{user?.email || 'Signed in'}</p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-[#E3DAD0]" />
             <DropdownMenuItem asChild>
-              <Link to="/account"><User className="mr-2 h-4 w-4" />Account</Link>
+              <Link to="/dashboard" className="text-[#2B1E19] focus:bg-[#F3EDE4]"><User className="mr-2 h-4 w-4 text-[#E5A93C]" />Storefront Dashboard</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/billing"><CreditCard className="mr-2 h-4 w-4" />Billing</Link>
+              <Link to="/account" className="text-[#2B1E19] focus:bg-[#F3EDE4]"><User className="mr-2 h-4 w-4" />Account</Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem asChild>
+              <Link to="/billing" className="text-[#2B1E19] focus:bg-[#F3EDE4]"><CreditCard className="mr-2 h-4 w-4" />Billing</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-[#E3DAD0]" />
+            <DropdownMenuItem onClick={handleLogout} className="text-red-700 focus:text-red-700 focus:bg-red-50">
               <LogOut className="mr-2 h-4 w-4" />Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -302,7 +305,7 @@ export default function DashboardLayout({ children }) {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#FBF9F6] text-[#2B1E19]">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

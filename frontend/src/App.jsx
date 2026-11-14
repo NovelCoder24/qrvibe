@@ -24,6 +24,7 @@ const SocialViewPage = React.lazy(() => import('./pages/SocialViewPage.jsx'));
 const MediaViewPage = React.lazy(() => import('./pages/MediaViewPage.jsx'));
 const MenuViewPage = React.lazy(() => import('./pages/MenuViewPage.jsx'));
 const FoldersPage = React.lazy(() => import('./pages/FoldersPage.jsx'));
+const StandeeActivationPage = React.lazy(() => import('./pages/StandeeActivationPage.jsx'));
 
 import TrialWarningBanner from './components/TrialWarningBanner.jsx';
 import TrialExpiredModal from './components/TrialExpiredModal.jsx';
@@ -91,11 +92,14 @@ const App = () => {
           <Route path="/social/:shortId" element={<SocialViewPage />} />
           <Route path="/media/:shortId" element={<MediaViewPage />} />
           <Route path="/menu/:shortId" element={<MenuViewPage />} /> 
+          <Route path="/activate" element={<StandeeActivationPage />} />
+          <Route path="/activate/:code" element={<StandeeActivationPage />} />
 
           <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<DashboardOverview />} />
             <Route element={<MainDashboardLayout />}>
               <Route path="/create" element={<CreateQRPage />} />
-              <Route path="/dashboard" element={<DashboardOverview />} />
+
               <Route path="/qrcodes" element={<QRCodesList />} />
               <Route path="/qrcodes/:id" element={<QRDetailPage />} />
               <Route path="/folders" element={<FoldersPage />} />

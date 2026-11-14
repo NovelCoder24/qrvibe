@@ -132,6 +132,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['salon', 'cafe', 'clinic'],
         default: null
+    },
+    // Google review link for storefront reputation
+    googleReviewUrl: {
+        type: String,
+        default: null
     }
 }, { timestamps: true })
 

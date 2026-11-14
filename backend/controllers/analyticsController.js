@@ -1,6 +1,7 @@
 import { Scan } from "../models/Scan.js";
 import { QRCode } from "../models/QRCode.js";
 import { DailyScanStats } from "../models/DailyScanStats.js";
+import { FeedbackEvent } from "../models/FeedbackEvent.js";
 import { resolveWanLocation } from "../services/ReverseGeocode.js";
 
 // Helper to generate zero-filled dates array
@@ -227,6 +228,9 @@ export const getDashboardAnalytics = async (req, res) => {
         let previousTotalScans = 0;
         let currentUniqueScanners = 0;
         let previousUniqueScanners = 0;
+        let currentGoogleRedirects = 0;
+        let currentPrivateFeedback = 0;
+        const staffTally = {};
 
         // Scans Over Time Map (Zero-filled)
         const dateRange = generateZeroFilledDates(days);
@@ -241,6 +245,15 @@ export const getDashboardAnalytics = async (req, res) => {
         currentStats.forEach(stat => {
             currentTotalScans += stat.total_scans;
             currentUniqueScanners += stat.unique_scans;
+            currentGoogleRedirects += (stat.google_redirects || 0);
+            currentPrivateFeedback += (stat.private_feedback || 0);
+
+            if (stat.staff_reviews) {
+                const entries = stat.staff_reviews.entries ? stat.staff_reviews.entries() : Object.entries(stat.staff_reviews);
+                for (const [staff, count] of entries) {
+                    staffTally[staff] = (staffTally[staff] || 0) + count;
+                }
+            }
             
             if (scansOverTimeMap[stat.date] !== undefined) {
                 scansOverTimeMap[stat.date] += stat.total_scans;
@@ -289,6 +302,37 @@ export const getDashboardAnalytics = async (req, res) => {
             .limit(5)
             .select("metadata.title short_id target_url stats.total_scans health_status qrImageUrl qr_type createdAt");
 
+        let eventGoogleCount = 0;
+        let eventFeedbackCount = 0;
+        try {
+            const feedbackAgg = await FeedbackEvent.aggregate([
+                { $match: { owner_id: userId, createdAt: { $gte: currentPeriodStart, $lte: now } } },
+                { $group: { _id: "$eventType", count: { $sum: 1 } } }
+            ]);
+            feedbackAgg.forEach(f => {
+                if (f._id === 'google_redirect') eventGoogleCount = f.count;
+                if (f._id === 'private_feedback') eventFeedbackCount = f.count;
+            });
+        } catch (_) {}
+
+        const qrTotals = await QRCode.find({ user_id: userId }).select('stats.google_redirects stats.private_feedback stats.staff_mentions');
+        let qrGoogleSum = 0;
+        let qrFeedbackSum = 0;
+        qrTotals.forEach(q => {
+            qrGoogleSum += (q.stats?.google_redirects || 0);
+            qrFeedbackSum += (q.stats?.private_feedback || 0);
+            if (q.stats?.staff_mentions) {
+                const entries = q.stats.staff_mentions.entries ? q.stats.staff_mentions.entries() : Object.entries(q.stats.staff_mentions);
+                for (const [st, ct] of entries) {
+                    staffTally[st] = (staffTally[st] || 0) + ct;
+                }
+            }
+        });
+
+        const totalGoogleRedirects = Math.max(currentGoogleRedirects, eventGoogleCount, qrGoogleSum);
+        const totalPrivateFeedback = Math.max(currentPrivateFeedback, eventFeedbackCount, qrFeedbackSum);
+        const staffLeaderboard = Object.entries(staffTally).map(([n, k]) => ({ n, k })).sort((a, b) => b.k - a.k);
+
         res.json({
             totals: {
                 totalQRs,
@@ -298,6 +342,9 @@ export const getDashboardAnalytics = async (req, res) => {
                 previousScans: previousTotalScans,
                 uniqueScanners: currentUniqueScanners,
                 uniqueDelta,
+                googleRedirects: totalGoogleRedirects,
+                privateFeedback: totalPrivateFeedback,
+                staffLeaderboard,
                 botFiltered: botFilteredCount,
                 peakTime: "N/A" // Removed due to materialized view limitation (grouped by day, not hour)
             },

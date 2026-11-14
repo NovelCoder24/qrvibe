@@ -141,6 +141,7 @@ const MenuViewPage = () => {
 
             {enableReviewBooster && (
                 <ReviewFunnel
+                    shortId={shortId}
                     businessCategory={businessCategory}
                     restaurantName={restaurantName}
                     googleReviewUrl={googleReviewUrl}

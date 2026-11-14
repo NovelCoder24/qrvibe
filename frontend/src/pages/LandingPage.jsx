@@ -26,23 +26,27 @@ const LandingPage = () => {
                     <span>QRVibe</span>
                 </Link>
 
-                <div className="links">
+                <div className="links flex items-center gap-2 sm:gap-6">
                     <a className="l" href="#how-it-works">How it works</a>
                     <a className="l" href="#who">Who it is for</a>
                     <a className="l" href="#pricing">Pricing</a>
 
                     {isAuthenticated ? (
-                        <Link to="/dashboard" className="l font-semibold">Dashboard</Link>
+                        <Link to="/dashboard" className="inline-flex items-center justify-center font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-[#2B1E19]/30 hover:border-[#2B1E19] text-[#2B1E19] transition-all">
+                            Dashboard
+                        </Link>
                     ) : (
-                        <Link to="/login" className="l font-semibold">Log In</Link>
+                        <Link to="/login" className="inline-flex items-center justify-center font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-[#2B1E19]/30 hover:border-[#2B1E19] text-[#2B1E19] transition-all">
+                            Log In
+                        </Link>
                     )}
 
                     <a
-                        className="btn hn"
+                        className="btn hn text-xs sm:text-sm"
                         href={whatsappOrderUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ minHeight: '44px', padding: '0 20px' }}
+                        style={{ minHeight: '40px', padding: '0 16px' }}
                     >
                         Get your standee
                     </a>

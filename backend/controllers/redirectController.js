@@ -20,6 +20,17 @@ export const isInAppBrowser = (ua) => {
     return IN_APP_BROWSER_PATTERN.test(ua);
 };
 
+/**
+ * Resolves activation destination for unactivated standee QR codes.
+ * Sub-50ms hot path helper.
+ */
+export const resolveUnactivatedRedirect = (qr, frontendUrl) => {
+    if (!qr || qr.isActivated !== false) return null;
+    const base = (frontendUrl || '').replace(/\/+$/, '');
+    const code = qr.kit_code || qr.short_id || '';
+    return `${base}/activate/${encodeURIComponent(code)}`;
+};
+
 const sanitizeKey = (str) => {
     if (!str) return "unknown";
     return String(str).replace(/[.$]/g, "_").toLowerCase().trim();
@@ -434,12 +445,20 @@ export const renderGpsInterstitial = ({ shortId, destinationUrl, title, telemetr
 // @desc    Redirect to the target URL and log the scan
 // @route   GET /r/:shortId
 // @access  Public
-export const redirectQR = async (req, res) => {
+export const redirectQR = async (req, res, deps = {}) => {
     try {
         const { shortId } = req.params;
+        const QRCodeModel = (deps && typeof deps === 'object' && deps.QRCode) ? deps.QRCode : QRCode;
         // 1. Find the QR Code by shortId and populate user to check plan
-        const qr = await QRCode.findOne({ short_id: shortId }).populate("user_id", "subscription.plan");
+        const qr = await QRCodeModel.findOne({ short_id: shortId }).populate("user_id", "subscription.plan");
         if (!qr) return res.status(404).send("<h1>404 - QR Code Not Found</h1>");
+
+        // Hot-path interceptor: Immediately redirect unactivated standee QR scans to branded activation page
+        if (qr.isActivated === false) {
+            const activationUrl = resolveUnactivatedRedirect(qr, env.FRONTEND_URL);
+            return res.redirect(activationUrl);
+        }
+
         if (!qr.isActive || qr.accessMode === "disabled") {
             return res.status(410).send("<h1>This QR Code is inactive</h1>");
         }
@@ -1134,3 +1153,6 @@ export const recordGpsTelemetry = async (req, res, nextOrProcessor) => {
         }
     }
 };
+
+// Alias for consistency with architecture specification
+export const handleRedirect = redirectQR;

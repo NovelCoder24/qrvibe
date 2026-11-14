@@ -28,6 +28,7 @@ const envSchema = z.object({
   // Frontend / CORS
   CORS_ORIGIN: z.string().optional(),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+  BASE_URL: z.string().default('http://localhost:5000'),
   
   // Architecture Toggles
   RUN_WORKER: z.enum(['true', 'false']).default('false').transform(val => val === 'true'),

@@ -90,6 +90,17 @@ const authSlice = createSlice({
             if (state.user) {
                 state.user.businessCategory = action.payload;
             }
+        },
+        setGoogleReviewUrl: (state, action) => {
+            if (state.user) {
+                state.user.googleReviewUrl = action.payload;
+            }
+        },
+        loginSuccess: (state, action) => {
+            state.isAuthenticated = true;
+            state.user = action.payload;
+            state.loading = false;
+            state.error = null;
         }
     },
     // Handle the Thunk lifecycles (Pending, Fulfilled, Rejected)
@@ -161,5 +172,5 @@ const authSlice = createSlice({
     }
 });
 
-export const { clearError, setAuthError, updateSubscriptionStatus, setActiveQrCount, setWorkspaceMode, setBusinessCategory } = authSlice.actions;
+export const { clearError, setAuthError, updateSubscriptionStatus, setActiveQrCount, setWorkspaceMode, setBusinessCategory, setGoogleReviewUrl, loginSuccess } = authSlice.actions;
 export default authSlice.reducer;

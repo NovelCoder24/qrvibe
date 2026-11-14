@@ -63,6 +63,7 @@ const sendTokens = async (res, user, statusCode = 200) => {
         hasCreatedFirstQR: user.hasCreatedFirstQR,
         workspaceMode: user.workspaceMode ?? null,
         businessCategory: user.businessCategory || null,
+        googleReviewUrl: user.googleReviewUrl || null,
         activeQrCount,
     });
 };
@@ -269,6 +270,7 @@ export const getMe = async (req, res) => {
                 hasCreatedFirstQR: user.hasCreatedFirstQR,
                 workspaceMode: user.workspaceMode ?? null,
                 businessCategory: user.businessCategory || null,
+                googleReviewUrl: user.googleReviewUrl || null,
                 activeQrCount,
             });
         } else {
@@ -305,6 +307,9 @@ export const updateProfile = async (req, res) => {
                     user.businessCategory = req.body.businessCategory;
                 }
             }
+            if (req.body.googleReviewUrl !== undefined) {
+                user.googleReviewUrl = req.body.googleReviewUrl ? req.body.googleReviewUrl.trim() : null;
+            }
             
             const updatedUser = await user.save();
             res.json({
@@ -313,7 +318,8 @@ export const updateProfile = async (req, res) => {
                 email: updatedUser.email,
                 whatsappNumber: updatedUser.whatsappNumber,
                 workspaceMode: updatedUser.workspaceMode ?? null,
-                businessCategory: updatedUser.businessCategory || null
+                businessCategory: updatedUser.businessCategory || null,
+                googleReviewUrl: updatedUser.googleReviewUrl || null
             });
         } else {
             res.status(404).json({ message: "User not found" });

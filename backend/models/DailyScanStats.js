@@ -19,6 +19,19 @@ const dailyScanStatsSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    google_redirects: {
+        type: Number,
+        default: 0
+    },
+    private_feedback: {
+        type: Number,
+        default: 0
+    },
+    staff_reviews: {
+        type: Map,
+        of: Number,
+        default: () => ({})
+    },
     devices: {
         desktop: { type: Number, default: 0 },
         mobile: { type: Number, default: 0 },

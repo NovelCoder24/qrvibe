@@ -28,7 +28,7 @@ const LoginPage = () => {
     // Navigate to dashboard if authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/qrcodes');
+            navigate('/dashboard');
         }
     }, [isAuthenticated, navigate]);
 
@@ -78,9 +78,9 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="lp min-h-screen flex flex-col justify-between">
-            {/* Top Navigation - exact same component & classes as RegisterPage */}
-            <header className="nav reg-nav">
+        <div className="lp lp-login-page min-h-screen flex flex-col justify-between">
+            {/* Top Navigation - fully responsive for small devices */}
+            <header className="nav reg-nav px-4 sm:px-7 py-3">
                 <Link className="brand" to="/">
                     <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
                         <rect x="1" y="1" width="8" height="8" rx="2" fill="#E5A93C" />
@@ -94,18 +94,18 @@ const LoginPage = () => {
                 <div className="nav-right">
                     <Link
                         to="/register"
-                        className="bg-transparent border-0 cursor-pointer text-[#2B1E19] hover:underline"
-                        style={{ borderBottom: '1px solid #2B1E19', paddingBottom: '2px', fontWeight: 500, fontSize: '13.5px' }}
+                        className="bg-transparent border-0 cursor-pointer text-[#2B1E19] hover:underline text-xs sm:text-[13.5px]"
+                        style={{ borderBottom: '1px solid #2B1E19', paddingBottom: '2px', fontWeight: 500 }}
                     >
-                        New storefront? <span className="font-bold">Create account</span>
+                        <span className="hidden sm:inline">New storefront? </span><span className="font-bold">Create account →</span>
                     </Link>
                 </div>
             </header>
 
-            {/* Main Content Split Grid - exact same component & layout as RegisterPage */}
-            <main className="reg-grid w flex-1">
+            {/* Main Content Split Grid - single-column focused on mobile, 2-col on desktop */}
+            <main className="reg-grid w flex-1 px-4 sm:px-7 py-6 sm:py-8 max-w-5xl mx-auto">
                 {/* Left Column: Sign In Form */}
-                <div>
+                <div className="w-full max-w-md mx-auto lg:max-w-none">
                     {/* Error Banner from Redux */}
                     {error && (
                         <div style={{ marginBottom: '14px', padding: '10px 14px', background: '#FFF0F0', border: '1px solid #B93829', borderRadius: '10px', color: '#B93829', fontSize: '13px' }}>
@@ -126,9 +126,10 @@ const LoginPage = () => {
                             {/* Google OAuth Quick Sign In */}
                             <button
                                 type="button"
-                                className="btn btn-google"
+                                className="btn btn-google w-full"
                                 disabled={loading}
                                 onClick={() => handleGoogleAuth()}
+                                style={{ minHeight: '44px', height: '44px', fontSize: '14px' }}
                             >
                                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                                     <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
@@ -144,8 +145,8 @@ const LoginPage = () => {
                             </div>
 
                             <form onSubmit={handleLoginSubmit} noValidate>
-                                <div className="field-row">
-                                    <div>
+                                <div className="space-y-3.5">
+                                    <div className="field-group">
                                         <div className="field-label">
                                             <label className="lbl" htmlFor="loginEmail">Email Address <span className="req-star">*</span></label>
                                         </div>
@@ -159,12 +160,14 @@ const LoginPage = () => {
                                             }}
                                             className={`reg-input ${fieldErrors.email ? 'input-error' : ''} ${shakingFields.email ? 'shake' : ''}`}
                                             placeholder="rohan@auraspa.in"
+                                            autoComplete="email"
+                                            style={{ height: '44px', fontSize: '16px' }}
                                             required
                                         />
                                         <span className={`error-msg ${fieldErrors.email ? 'show' : ''}`}>Please enter your registered email address.</span>
                                     </div>
 
-                                    <div>
+                                    <div className="field-group">
                                         <div className="field-label">
                                             <label className="lbl" htmlFor="loginPassword">Password <span className="req-star">*</span></label>
                                         </div>
@@ -179,33 +182,41 @@ const LoginPage = () => {
                                                 }}
                                                 className={`reg-input ${fieldErrors.password ? 'input-error' : ''} ${shakingFields.password ? 'shake' : ''}`}
                                                 placeholder="••••••••"
-                                                style={{ paddingRight: '46px' }}
+                                                style={{ paddingRight: '46px', height: '44px', fontSize: '16px' }}
+                                                autoComplete="current-password"
                                                 required
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6B5A50] hover:text-[#2B1E19] focus:outline-none"
+                                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6B5A50] hover:text-[#2B1E19] focus:outline-none p-1"
                                                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                                             >
-                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
                                         </div>
                                         <span className={`error-msg ${fieldErrors.password ? 'show' : ''}`}>Password is required.</span>
                                     </div>
                                 </div>
 
-                                <div className="form-actions" style={{ marginTop: '24px' }}>
-                                    <span className="lbl">No credit card needed · Encrypted session</span>
-                                    <button type="submit" className="btn hn" disabled={loading}>
+                                <div className="form-actions flex-col sm:flex-row gap-3 sm:gap-2 mt-5 pt-4">
+                                    <button
+                                        type="submit"
+                                        className="btn hn w-full sm:w-auto order-1 sm:order-2"
+                                        disabled={loading}
+                                        style={{ minHeight: '44px', height: '44px', fontSize: '15px' }}
+                                    >
                                         {loading ? 'Processing...' : 'Sign in & open storefront →'}
                                     </button>
+                                    <span className="lbl text-center sm:text-left text-xs order-2 sm:order-1">
+                                        No credit card needed · Encrypted session
+                                    </span>
                                 </div>
                             </form>
                         </div>
 
                         {/* Direct Navigation to Registration Page */}
-                        <div className="text-center mt-5">
+                        <div className="text-center mt-6">
                             <p className="text-sm text-[#6B5A50]">
                                 Don't have a storefront account yet?{' '}
                                 <Link to="/register" className="font-bold text-[#2B1E19] underline hover:text-[#E5A93C] transition-colors">
@@ -216,8 +227,8 @@ const LoginPage = () => {
                     </div>
                 </div>
 
-                {/* Right Column: Live Interactive Stage Preview - exact same component & layout as RegisterPage */}
-                <aside className="preview-col" aria-label="Live Standee & Phone Preview">
+                {/* Right Column: Live Interactive Stage Preview - hidden on mobile (< 1024px) for focused mobile sign in */}
+                <aside className="preview-col hidden lg:block" aria-label="Live Standee & Phone Preview">
                     <div className="stage dk">
                         <div className="stage-top">
                             <span className="lbl">Counter &amp; Guest Preview</span>

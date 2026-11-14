@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { getVocabulary } from '../../config/vocabulary';
+import api from '../../api/axios';
 import { 
     Star, 
     X, 
@@ -106,6 +107,15 @@ const ReviewFunnel = ({
         } catch (e) {
             console.error('Clipboard copy failed', e);
         }
+
+        try {
+            api.post('/telemetry/feedback', {
+                shortId,
+                eventType: 'google_redirect',
+                rating: hoverRating || rating || 5,
+                reviewDraft: draftText
+            }).catch(() => {});
+        } catch (_) {}
 
         setCopiedIndex(index);
 

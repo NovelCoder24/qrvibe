@@ -11,6 +11,8 @@ import razorpayRoutes from "./routes/razorpayRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import folderRoutes from "./routes/folderRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import standeeRoutes from "./routes/standeeRoutes.js";
+import telemetryRoutes from "./routes/telemetryRoutes.js";
 import { env } from "./config/env.js"; 
 import { getClientIp, getLocationOffline } from "./services/Geolocation.js"; 
 
@@ -135,6 +137,8 @@ app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/upload', uploadFileRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/standees', standeeRoutes);
+app.use('/api/telemetry', telemetryRoutes);
 
 // Public Redirect Route — scan limiter
 // This must come LAST or have a specific prefix like /r

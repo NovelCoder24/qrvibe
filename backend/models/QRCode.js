@@ -46,13 +46,20 @@ const qrCodeSchema = new mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: function() { return this.isActivated !== false; },
     index: true
   },
   short_id: {
     type: String,
     required: true,
     unique: true,
+    index: true
+  },
+  kit_code: {
+    type: String,
+    uppercase: true,
+    trim: true,
+    default: null,
     index: true
   },
   target_url: {
@@ -89,6 +96,11 @@ const qrCodeSchema = new mongoose.Schema({
     default: true,
     index: true
   },
+  isActivated: {
+    type: Boolean,
+    default: true,
+    index: true
+  },
   gpsLocationEnabled: {
     type: Boolean,
     default: false,
@@ -113,7 +125,14 @@ const qrCodeSchema = new mongoose.Schema({
   },
   stats: {
     total_scans: { type: Number, default: 0 },
-    last_scanned_at: { type: Date }
+    last_scanned_at: { type: Date },
+    google_redirects: { type: Number, default: 0 },
+    private_feedback: { type: Number, default: 0 },
+    staff_mentions: {
+      type: Map,
+      of: Number,
+      default: () => ({})
+    }
   },
   metadata: {
     type: qrMetadataSchema,
