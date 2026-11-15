@@ -9,7 +9,6 @@ import redirectRoutes from "./routes/redirectRoutes.js";
 import uploadFileRoutes from "./routes/uploadFile.js";
 import razorpayRoutes from "./routes/razorpayRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
-import folderRoutes from "./routes/folderRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import standeeRoutes from "./routes/standeeRoutes.js";
 import telemetryRoutes from "./routes/telemetryRoutes.js";
@@ -87,7 +86,12 @@ app.use(cors({
 // ==========================================
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
 
-app.use(express.json({ type: ['application/json', 'text/plain'] }));
+app.use(express.json({
+    type: ['application/json', 'text/plain'],
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 
@@ -98,13 +102,13 @@ app.get('/health', (req, res) => {
 
 // Debug IP endpoint to inspect Render / Cloudflare headers and visitor IP resolution
 app.get('/debug-ip', (req, res) => {
-    // In production, restrict debug-ip to requests with valid debug key
-    if (env.NODE_ENV === 'production' && req.headers['x-debug-key'] !== env.JWT_SECRET && req.query.key !== env.JWT_SECRET) {
+    // In production, debug-ip is disabled completely to prevent exposure of internal network details
+    if (env.NODE_ENV === 'production') {
         return res.status(404).json({ message: "Not found" });
     }
 
     const detectedIp = getClientIp(req);
-    const isLocalDevOverride = process.env.NODE_ENV !== 'production' &&
+    const isLocalDevOverride = env.NODE_ENV !== 'production' &&
         !req.headers['true-client-ip'] &&
         !req.headers['cf-connecting-ip'] &&
         (!req.headers['x-forwarded-for'] || req.headers['x-forwarded-for'].includes('127.0.0.1'));
@@ -135,7 +139,6 @@ app.use('/api/qrcodes', qrRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/razorpay', razorpayRoutes);
 app.use('/api/upload', uploadFileRoutes);
-app.use('/api/folders', folderRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/standees', standeeRoutes);
 app.use('/api/telemetry', telemetryRoutes);

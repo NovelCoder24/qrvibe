@@ -172,19 +172,29 @@ export const updateQR = async (req, res) => {
 
         const urlChanged = req.body.target_url && req.body.target_url !== qr.target_url;
 
+        // Whitelist allowed updates to prevent Mass Assignment privilege escalation
+        const allowedUpdates = {};
+        if (req.body.target_url !== undefined) allowedUpdates.target_url = req.body.target_url;
+        if (req.body.title !== undefined) allowedUpdates.title = req.body.title;
+        if (req.body.customization !== undefined) allowedUpdates.customization = req.body.customization;
+        if (req.body.placement !== undefined) allowedUpdates.placement = req.body.placement;
+        if (req.body.folder_id !== undefined) allowedUpdates.folder_id = req.body.folder_id;
+        if (req.body.utm !== undefined) allowedUpdates.utm = req.body.utm;
+        if (req.body.gpsLocationEnabled !== undefined) allowedUpdates.gpsLocationEnabled = !!req.body.gpsLocationEnabled;
+
         // Ensure metadata preserves or defaults businessCategory
         if (req.body.metadata) {
-            req.body.metadata = {
+            allowedUpdates.metadata = {
                 ...(qr.metadata || {}),
                 ...req.body.metadata,
                 businessCategory: req.body.metadata.businessCategory || qr.metadata?.businessCategory || 'salon'
             };
         }
 
-        // Update fields
+        // Update fields safely using whitelist
         const updatedQR = await QRCode.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            { $set: allowedUpdates },
             { new: true }
         );
 

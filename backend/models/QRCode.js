@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { env } from "../config/env.js";
 
 // Explicit Subschemas for Metadata & Menu/Rate Card Items (Mongoose Strict Mode Fix)
 const menuItemSchema = new mongoose.Schema({
@@ -140,7 +141,6 @@ const qrCodeSchema = new mongoose.Schema({
   },
   folder_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Folder",
     default: null,
     index: true
   },
@@ -171,7 +171,7 @@ qrCodeSchema.index({ user_id: 1, folder_id: 1 });
 // 2. INSTANCE METHODS
 // Helper to get the full short link for the QR image
 qrCodeSchema.methods.getFullShortUrl = function () {
-  const baseUrl = process.env.BASE_URL || "http://localhost:4000";
+  const baseUrl = env.BASE_URL || "http://localhost:5000";
   return `${baseUrl}/r/${this.short_id}`
 }
 // Method to safely increment scans

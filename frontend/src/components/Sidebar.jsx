@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import {
-    PlusCircle,
-    BarChart2,
     LayoutDashboard,
     QrCode,
+    Sparkles,
     CreditCard,
-    Bell,
-    Settings,
-    Shield,
-    Folder
+    Settings
 } from 'lucide-react';
 import UpgradeModal from './UpgradeModal';
-import qrvibeLogoPrimary from '../assets/qrvibe-logo-primary.svg';
 import { getVocabulary } from '../config/vocabulary';
 
 const UI_PLAN_LIMITS = {
@@ -26,27 +21,22 @@ const UI_PLAN_LIMITS = {
 };
 
 const Sidebar = ({ isOpen, overlay = false, onClose }) => {
-    const primaryNav = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', modes: ['storefront', 'marketing'] },
-        { id: 'qrcodes', label: 'My QR Codes', icon: QrCode, path: '/qrcodes', modes: ['storefront', 'marketing'] },
-        { id: 'folders', label: 'Folders', icon: Folder, path: '/folders', modes: ['marketing'] },
-        { id: 'create', label: 'Create QR', icon: PlusCircle, path: '/create', gated: true, modes: ['storefront', 'marketing'] },
-        { id: 'analytics', label: 'Analytics', icon: BarChart2, path: '/analytics', modes: ['marketing'] },
-        { id: 'alerts', label: 'Alerts', icon: Bell, path: '/alerts', modes: ['marketing'] },
-        { id: 'billing', label: 'Billing', icon: CreditCard, path: '/billing', modes: ['storefront', 'marketing'] },
-        { id: 'privacy', label: 'Privacy & Data', icon: Shield, path: '/privacy-data', modes: ['marketing'] },
-        { id: 'settings', label: 'Settings', icon: Settings, path: '/account', modes: ['storefront', 'marketing'] },
+    // Simplified 5 Storefront Links for in-store salons, spas, cafes, bakeries
+    const storefrontNav = [
+        { id: 'dashboard', label: 'Storefront Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+        { id: 'qrcodes', label: 'Standees & Tables', icon: QrCode, path: '/qrcodes' },
+        { id: 'activate', label: 'Activate Standee', icon: Sparkles, path: '/activate' },
+        { id: 'billing', label: 'Billing & Plan', icon: CreditCard, path: '/billing' },
+        { id: 'settings', label: 'Store Settings', icon: Settings, path: '/account' },
     ];
 
     const { user } = useSelector((state) => state.auth);
-    const workspaceMode = user?.workspaceMode || 'storefront';
     const v = getVocabulary(user?.businessCategory);
-    const filteredNav = primaryNav.filter(item => item.modes.includes(workspaceMode));
     const subscription = user?.subscription;
 
     const [showLimitModal, setShowLimitModal] = useState(false);
 
-    // Synchronized Plan & Limit Resolution (matches DashboardOverview & backend planConfig)
+    // Synchronized Plan & Limit Resolution
     const rawPlan = (subscription?.plan || 'free').toLowerCase();
     const isTrial = subscription?.status === 'trialing';
     const isExpired =
@@ -117,24 +107,15 @@ const Sidebar = ({ isOpen, overlay = false, onClose }) => {
                 </button>
             </div>
 
-            {/* Navigation */}
+            {/* Navigation (Simplified 5 Storefront Links) */}
             <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                {filteredNav.map((item) => {
+                {storefrontNav.map((item) => {
                     const Icon = item.icon;
                     return (
                         <NavLink
                             key={item.id}
                             to={item.path}
-                            onClick={(e) => {
-                                if (item.gated) {
-                                    if (effectivePlan === 'free' && used >= dynamicLimit) {
-                                        e.preventDefault();
-                                        setShowLimitModal(true);
-                                        return;
-                                    }
-                                }
-                                onClose?.();
-                            }}
+                            onClick={() => onClose?.()}
                             className={({ isActive }) => `
                                 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium transition-all
                                 min-h-[44px]
@@ -168,7 +149,7 @@ const Sidebar = ({ isOpen, overlay = false, onClose }) => {
                         </span>
                     </div>
                     <p className="text-[11.5px] text-[#6B5A50] mt-1">
-                        {used}/{dynamicLimit === Infinity ? '∞' : dynamicLimit} {workspaceMode === 'storefront' ? v.quotaLabel : 'QR codes used'}
+                        {used}/{dynamicLimit === Infinity ? '∞' : dynamicLimit} {v.quotaLabel || 'standees active'}
                     </p>
                     <div className="mt-2.5 h-1.5 bg-[#E3DAD0]/60 rounded-full overflow-hidden">
                         <div

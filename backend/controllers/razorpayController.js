@@ -1,20 +1,21 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
+import { env } from "../config/env.js";
 import { User } from "../models/User.js";
 import { RAZORPAY_PLANS } from "../config/razorpayConfig.js";
 import { getPlanLimits } from "../config/planConfig.js";
 
 // Check if we're in test/dummy mode
-const isTestMode = !process.env.RAZORPAY_KEY_ID ||
-    process.env.RAZORPAY_KEY_ID.includes('dummy') ||
-    process.env.RAZORPAY_KEY_ID === 'rzp_test_dummy123';
+const isTestMode = !env.RAZORPAY_KEY_ID ||
+    env.RAZORPAY_KEY_ID.includes('dummy') ||
+    env.RAZORPAY_KEY_ID === 'rzp_test_dummy123';
 
 // Only initialize Razorpay if we have real credentials
 let razorpay = null;
 if (!isTestMode) {
     razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET
+        key_id: env.RAZORPAY_KEY_ID,
+        key_secret: env.RAZORPAY_KEY_SECRET
     });
 }
 
@@ -34,8 +35,11 @@ export const createSubscription = async (req, res) => {
             return res.status(400).json({ message: "Invalid plan or billing cycle" });
         }
 
-        // TEST MODE: Return mock response
+        // TEST MODE: Return mock response (Disabled in production)
         if (isTestMode) {
+            if (env.NODE_ENV === 'production') {
+                return res.status(503).json({ message: "Payment service is currently unavailable. Please contact support." });
+            }
             const mockSubscriptionId = `sub_test_${Date.now()}`;
             const limits = getPlanLimits(plan);
             user.subscription.razorpaySubscriptionId = mockSubscriptionId;
@@ -225,16 +229,29 @@ export const updateBillingInfo = async (req, res) => {
 // @access  Public (verified via signature)
 export const handleWebhook = async (req, res) => {
     try {
-        const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-        const signature = req.headers["x-razorpay-signature"];
+        const webhookSecret = env.RAZORPAY_WEBHOOK_SECRET;
+        if (!webhookSecret) {
+            console.error("[Razorpay Webhook] RAZORPAY_WEBHOOK_SECRET is not configured");
+            return res.status(500).json({ message: "Server misconfiguration" });
+        }
 
-        // Verify webhook signature
+        const signature = req.headers["x-razorpay-signature"];
+        if (!signature) {
+            console.warn("[Razorpay Webhook] Missing x-razorpay-signature header");
+            return res.status(400).json({ message: "Missing signature" });
+        }
+
+        // Verify webhook signature using raw body buffer to prevent re-serialization discrepancies
+        const rawPayload = req.rawBody || JSON.stringify(req.body);
         const expectedSignature = crypto
             .createHmac("sha256", webhookSecret)
-            .update(JSON.stringify(req.body))
+            .update(rawPayload)
             .digest("hex");
 
-        if (signature !== expectedSignature) {
+        const signatureBuffer = Buffer.from(signature);
+        const expectedBuffer = Buffer.from(expectedSignature);
+
+        if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
             console.error("[Razorpay Webhook] Invalid signature");
             return res.status(400).json({ message: "Invalid signature" });
         }

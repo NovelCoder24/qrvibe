@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import axios from "axios";
 import { LRUCache } from "lru-cache";
+import { env } from "../config/env.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,8 +13,8 @@ const __dirname = path.dirname(__filename);
 const DEFAULT_CITY_DB_PATH = path.resolve(__dirname, "../data/GeoLite2-City.mmdb");
 const DEFAULT_ASN_DB_PATH = path.resolve(__dirname, "../data/GeoLite2-ASN.mmdb");
 
-const cityDbPath = process.env.GEOLITE2_DB_PATH || process.env.MAXMIND_DB_PATH || DEFAULT_CITY_DB_PATH;
-const asnDbPath = process.env.GEOLITE2_ASN_DB_PATH || process.env.MAXMIND_ASN_DB_PATH || DEFAULT_ASN_DB_PATH;
+const cityDbPath = env.GEOLITE2_DB_PATH || DEFAULT_CITY_DB_PATH;
+const asnDbPath = env.GEOLITE2_ASN_DB_PATH || DEFAULT_ASN_DB_PATH;
 
 // In-process Reader instances, LRU Cache, and Single-Flight Inflight Map
 let lookupReader = null;
@@ -148,7 +149,7 @@ function headerValue(reqOrHeaders, name) {
 export function getClientIp(req) {
   if (!req) return null;
 
-  if (process.env.NODE_ENV !== "production") {
+  if ((process.env.NODE_ENV || env.NODE_ENV) !== "production") {
     const testIp = req.query?.test_ip || req.query?.ip;
     const normTest = normalizeIp(testIp);
     if (normTest) return normTest;

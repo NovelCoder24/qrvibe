@@ -48,6 +48,23 @@ Build out QRVibe as the **In-Store Digital Front-Desk & Google Review Engine for
     - **Public Rate Card & Lookbook:** Upgraded public template suite (`BasicTemplates.jsx`, `ImmersiveTemplate.jsx`, `LighthouseTemplate.jsx`) with Client Filter tabs (`All`, `For Her`, `For Him`, `Unisex`) with inclusive matching, beauty badges (`⏱️ duration`, `🧴 brandUsed`), and floating WhatsApp appointment booking CTA (`wa.me`) in `MenuViewPage.jsx`.
     - **Salon Review Booster & Private Shield:** Adapted `ReviewFunnel.jsx` to dynamically generate beauty-specific 5-star review drafts (styling, facials, hygiene, precision) and salon complaint tags for private owner WhatsApp resolution.
     - **Verification & Builds:** 100% test pass (68/68 automated tests) and Vite production build passed with 0 errors on branch `product`.
+- **Storefront Pivot & Deprecated Generic Platform Clean-Up:**
+  - Fully pivoted from generic horizontal QR code generator (PDF, VCARD, SOCIAL, MEDIA, URL, campaign folders, privacy ledgers) exclusively to **In-Store AI Review Funnel & Digital Lookbook / Menu for Salons & Spas and Cafes & Bakeries**.
+  - **Cleanly Removed Deprecated Files & Routes:**
+    - Non-menu public view pages deleted: `PDFViewPage.jsx`, `VCardViewPage.jsx`, `SocialViewPage.jsx`, `MediaViewPage.jsx`.
+    - Deprecated generic QR creator forms & wizard deleted: `frontend/src/pages/create/forms/*`, `frontend/src/pages/create/steps/*`, `CreateQRPage.jsx`.
+    - Deprecated marketing & compliance pages deleted: `FoldersPage.jsx`, `PrivacyDataPage.jsx`, `AnalyticsPage.jsx`.
+    - Deprecated backend models and routes deleted: `Folder.js`, `folderRoutes.js`, `folderController.js`, `ConsentRecord.js`.
+    - Unmounted `/api/folders` from `backend/app.js` and removed references in `QRCode.js` and `userController.js`.
+    - Cleaned up navigation and routes in `App.jsx` and `QRCodesList.jsx`.
+  - **Protected & Kept Core Storefront Assets:**
+    - Storefront Lookbook & Menu engine: `MenuViewPage.jsx`, `frontend/src/components/MenuTemplates/*`, `ReviewFunnel.jsx`, `MenuAiService.js`, `serviceImageCatalog.js`.
+    - Storefront Dashboard: `DashboardOverview.jsx`, `StorefrontDashboard.css`, `Sidebar.jsx` (simplified 5 storefront links).
+    - Standee & redirect engine: `StandeeKit.js`, `standeeController.js`, `redirectController.js`, `Geolocation.js`, `DailyScanStats.js`, `FeedbackEvent.js`, `telemetryRoutes.js`, `seedStandees.js`.
+    - Core Auth & User models: `User.js`, `authController.js`, `userController.js`, `authSlice.js`, `LoginPage.jsx`, `RegisterPage.jsx`.
+  - **Verification:**
+    - 131/131 backend tests pass (`node --test backend/tests/*.test.js`).
+    - Vite production build succeeds with 0 errors (`npm run build --prefix frontend`).
 - **Menu Templates & Review Funnel Optimization:**
   - **Single-Screen Viewport Registration & Onboarding (`RegisterPage.jsx` & `index.css`):**
     - Compacted registration layout to fit completely within standard desktop/laptop viewports without irrelevant scrolling:
@@ -124,6 +141,52 @@ Build out QRVibe as the **In-Store Digital Front-Desk & Google Review Engine for
     - **Dashboard Tab 3 & Overview Real Standee Integration (`DashboardOverview.jsx`):** Replaced static mock state with live backend standee management (`api.get('/standees/my-standees')`). Tab 0 displays active kit code/station badge or unlinked callouts. Tab 3 ("Standee & Studio") renders active primary 4×6″ preview card, multi-standee station cards with live scan counts, expandable inline kit linking drawer, and 4×6″ printable PDF canvas generation with real scannable QR matrix.
     - **Manufacturing Batch Seeder CLI (`seedStandees.js`):** CLI tool supporting `--count`, `--batch`, `--export-csv`, and `--dry-run` to bulk generate batches of unactivated standee kits and QRs with formatted CSV exports for acrylic print vendors.
     - **Full Test Verification:** 121/121 backend unit tests passing (including 42 new unit tests across `StandeeKit.test.js`, `StandeeActivation.test.js`, `UnactivatedStandeeRedirect.test.js`, and `StandeeSeedScript.test.js`) and 100% Vite production build success with 0 errors.
+  - **In-Salon Pitch & Walk-In Readiness (Voucher Funnel, 4x6 Standee, Demo Salon):**
+    - **Post-Review ₹200 WhatsApp Privilege Pass Screen (`ReviewFunnel.jsx`):** Added a 1-step celebratory bottom-sheet following Google Maps review submission displaying a gold-embossed "₹200 Privilege Pass (Code: VIBE200)" valid for 60 days on treatments. Features a 1-tap "Tap to Save ₹200 Voucher on WhatsApp" CTA deep-linked to the salon owner's WhatsApp, automatically capturing client phone numbers and driving guaranteed repeat visits.
+    - **High-Converting 4x6 Printable Standee Canvas (`DashboardOverview.jsx`, `StandeeActivationPage.jsx`):** Upgraded 4x6 printable standee generator with the scissors center icon inside the scannable QR matrix, the pitch hook *"Scan for Today's In-Chair Offers & Unlock ₹200 Off Your Next Visit"*, 5-star review hook, and anti-UPI microcopy *"📷 Open Phone Camera to Scan (Not GPay)"*. Accessible via 1-click in Dashboard Tab 3 and on the Standee Activation celebration screen.
+    - **Pre-Seeded Demo Salon Live in MongoDB Atlas (`seedDemoSalon.js`, `DemoSalonSeed.test.js`):** Built and executed idempotent seed script populating `Aura Hair & Spa, Indore` with short redirect ID `aura-salon` and kit code `BOX-01` in MongoDB Atlas. Loaded with 8 top services (Keratin, HydraFacial, Global Hair Colour, O3+ Facial, Men's Fade, etc.) across 4 categories and 3 stylists (Riya, Rahul, Pooja).
+    - **Short URL Routing & Multi-Domain Support (`App.jsx`, `redirectRoutes.js`):** Routed `/s/:shortId` and `/menu/:shortId` directly to `MenuViewPage.jsx`, enabling zero-friction live demonstrations at `qrvibe.in/s/aura-salon`. Added `backend/Procfile` for Railway/Render container execution.
+    - **Clean Committed Tree:** Locked in all 15 previously untracked files and 21 modified files on branch `product` with 100% clean working tree and 124 passing unit tests.
+
+  - **Storefront Dashboard Exact Specification Alignment (`DashboardOverview.jsx`, `StorefrontDashboard.css`, `frontend/src/utils/qrcode.js`):**
+    - Faithfully implemented the exact design, typography, layout, sheets, modals, and Chameleon vertical capabilities from the user's provided specification (`qv.html`):
+      1. **Tab 0: Overview:** Live Front-Desk hero banner with Kit ID status and quick actions, 3 ROI counters with cubic-ease animated count-up (`roiScans`, `roiGoogle`, `roiFeedback`), Quick Action strip (`+ Pin festive offer`, `+ Add new service`, `+ Add stylist name`), and Top 3 staff ranked leaderboard with animated progress bars.
+      2. **Tab 1: Lookbook & Rate Card:** Dynamic vertical header (`v.t2`), pinned festive offer banner with live preview card and toggle switch, Paper rate card photo snap box with simulated OCR staging sheet, category filter pills with `+ New category` sheet, and services grid with in-place price/onwards/availability editing and full service editor modal.
+      3. **Tab 2: Reviews & Feedback:** Staff leaderboard with WhatsApp report deep-link and add-staff input, service chips manager with 6-chip guardrail, private feedback line with owner WhatsApp and preview bubble, and verified Google Maps connection with Place ID validator.
+      4. **Tab 3: Standee & Studio:** Single-sided acrylic countertop hardware preview card with scannable Level-H QR code and center monogram/logo, Kit ID pairing (`BOX-01`), 4x6 printable standee PDF canvas generator with `@page { size: 4in 6in; margin: 0; }` and automatic print trigger, studio identity form with logo uploader, 3-theme switcher (Warm Cream & Espresso, Obsidian, Forest), 7-day walk-in trial vs annual pass view toggle, and Monday 9 AM WhatsApp digest switch.
+      5. **Interactive Sheets & Modals:** Add/Edit Service sheet, New Category sheet, Rate Card Staging sheet with editable rows, Upgrade to Annual Pass sheet with UPI link (`upi://pay?...`) and WhatsApp confirmation, Guest Preview Phone Simulator drawer with interactive 5-star rating, staff/service chips, auto-drafting review text, and private WhatsApp feedback fallback, plus 3-step First-Time Setup Wizard (`.wz`).
+
+  - **Frontend Architecture Cleanup & Directory Standardization (Branch `product`):**
+    - Executed a complete folder structure refactoring of `frontend/src` to align 100% with modern React/Vite standards and the Storefront In-Store Digital Front-Desk app:
+      1. **Separated Pages from Components:** Moved `DashboardOverview.jsx` and `QRCodesList.jsx` into `frontend/src/pages/`, making `pages/` the single source of truth for all application routes (`DashboardOverview`, `LandingPage`, `LoginPage`, `RegisterPage`, `MenuViewPage`, `StandeeActivationPage`, `BillingPage`, `AccountPage`, `QRDetailPage`, `QRCodesList`).
+      2. **Code Splitting & Lazy Loading:** Lazy-loaded all route views with `React.lazy()` in `App.jsx`, reducing initial index bundle size from 486 kB to 309 kB and isolating page styles into scoped CSS chunks.
+      3. **Standardized UI Directory:** Renamed `components/UI` to lowercase `components/ui/` (cross-platform Linux/Windows casing consistency) and updated `@/components/ui/` imports across `AccountPage.jsx` and `BillingPage.jsx`.
+      4. **Dedicated Styles Directory:** Created `frontend/src/styles/` and moved `StorefrontDashboard.css` into it.
+      5. **Deleted Dead Assets & Components:** Removed dead `QRCard.jsx`, unused `BusinessCategoryModal.jsx`, and empty `App.css`.
+      6. **Verified Production Build:** `npm run build` in `frontend` succeeded in 7.73s with **0 errors**.
+      6. **Scoped Styles & Client QR Engine:** Extracted self-contained `qrcode` generator into `frontend/src/utils/qrcode.js` for 100% offline scannable Level-H QR matrix rendering with center circular monogram/logo. Scoped all dashboard CSS strictly under `.sf-dash` in `StorefrontDashboard.css`.
+      7. **Build & Quality:** 100% Vite production build success with 0 errors (`✓ built in 13.04s`).
+  - **Full Codebase Security Audit & Remediation (SEC-01 to SEC-12):**
+    - Fixed **SEC-01 (SSRF in Link Health Monitor)**: Added `isBlockedHostOrIp` in `healthMonitor.js` blocking cloud metadata (`169.254.169.254`, `metadata.google.internal`), loopback (`127.0.0.1`, `::1`), private RFC1918 subnets (`10.x`, `172.16.x`, `192.168.x`), and non-HTTP schemes with redirect inspection.
+    - Fixed **SEC-02 (Unauthenticated Public Uploads)**: Added `protect` auth middleware and `ALLOWED_MIME_TYPES` filter (JPEG, PNG, WEBP, GIF, PDF) with Multer error handling in `uploadFile.js`.
+    - Fixed **SEC-03 (Stored XSS in Redirect Micro-Bridge & GPS Interstitial)**: Sanitized redirect URLs in `redirectController.js`, disallowing `javascript:`, `data:`, `vbscript:`, escaped `<noscript>` meta tags, and encoded inline scripts using `JSON.stringify(...).replace(/</g, '\\u003c')`.
+    - Fixed **SEC-04 (Mass Assignment in `updateQR`)**: Replaced raw `req.body` with a strict whitelist (`target_url`, `title`, `customization`, `placement`, `folder_id`, `utm`, `gpsLocationEnabled`, `metadata`) in `qrController.js`, and added `.refine()` against `javascript:`/`data:` in `qrValidator.js`.
+    - Fixed **SEC-05 (Webhook HMAC Timing Attacks & Non-Deterministic JSON)**: In `app.js`, preserved raw body buffers via `express.json({ verify: ... })`. In `webhookController.js` and `razorpayController.js`, replaced `!==` with `crypto.timingSafeEqual` and length checks, and computed HMAC using raw body buffers.
+    - Fixed **SEC-06 (Bcrypt Work Factor)**: Increased password hashing rounds in `User.js` from 5 to 12.
+    - Fixed **SEC-07 (`JWT_SECRET` in `/debug-ip`)**: Disabled `/debug-ip` unconditionally when `env.NODE_ENV === 'production'` in `app.js`.
+    - Fixed **SEC-08 (Refresh Token Revocation)**: Added `tokenVersion` counter to `User.js`, signed into refresh tokens, verified on `/api/users/refresh`, and incremented on password change and logout in `userController.js`.
+    - Fixed **SEC-09 (Google OAuth Erasure Challenge)**: In `userController.js`, required explicit `confirmDelete === 'DELETE'` confirmation before purging accounts for OAuth users.
+    - Fixed **SEC-10 (ReDoS in Analytics Search)**: Escaped regex metacharacters in `analyticsController.js` before executing MongoDB `$regex` queries.
+    - Fixed **SEC-11 (Edge IP Header Trust & Single Source of Config)**: Standardized on `env.NODE_ENV` across `Geolocation.js`, `ReverseGeocode.js`, `healthMonitor.js`, and `QRCode.js`.
+    - Fixed **SEC-12 (Multer Memory Bounds on Menu Uploads)**: Reduced `menuPhotoUpload` memory limits to 5MB and 4 files in `qrRoutes.js`.
+    - Built comprehensive security regression test suite (`SecurityRemediation.test.js`) with 100% pass rate (68/68 total passing tests).
+  - **Full Mobile Responsiveness & Navigation Architecture Overhaul (`LandingPage.jsx`, `DashboardOverview.jsx`, `StorefrontDashboard.css`):**
+    - **Landing Page Navigation Drawer (`LandingPage.jsx`):** Added a responsive hamburger menu toggle (`Menu` / `X` from `lucide-react`) and slide-in drawer on mobile viewports (< 860px). Surfaces full navigation ("How it works", "Who it is for", "Pricing"), authentication ("Log In to Storefront", "Start 7-Day Free Trial"), and WhatsApp standee inquiries with anti-hostageware pledge and DPDP note. Body scroll lock on drawer open.
+    - **Dashboard Sticky Mobile Top Bar (`DashboardOverview.jsx`, `StorefrontDashboard.css`):** Added sticky `.sf-mobile-bar` (56px, blur backdrop) with store name, live green status pulse, trial days remaining pill, and account profile action button.
+    - **Mobile Account & Profile Sheet (`DashboardOverview.jsx`):** Built dedicated bottom sheet modal for mobile access to storefront identity, user account email, trial status with 1-tap "Upgrade to Annual Pass" action, "Re-open setup wizard", "Open guest preview simulator", "View live public storefront page", and "Sign out".
+    - **Bottom Nav Bar & Safe Area Padding (`StorefrontDashboard.css`):** Configured bottom navigation `.sf-dash .side` with `padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px))` and main workspace with `calc(88px + env(safe-area-inset-bottom, 0px))` bottom padding to eliminate button clipping across modern mobile viewports (e.g. iPhone home bar).
+    - **Setup Wizard Mobile Hardening (`StorefrontDashboard.css`):** Made `.sf-dash .wz` padding responsive (12px/10px on small screens), `.wzc` max-height 92vh with 18px padding, and `.acts` action buttons full-width stacked on screens < 480px for thumb-friendly navigation.
+    - **Full Production Build & Browser Verification:** 100% Vite production build success (`✓ built in 1m 1s`), automated mobile testing passed at 390×844 px across Landing Page, Dashboard, Account Sheet, Setup Wizard, and all 4 bottom tabs with zero layout overflows or clipping.
 
 ## ⏳ In Progress
 - Field testing & walk-in validation of salon onboarding and review booster flow.

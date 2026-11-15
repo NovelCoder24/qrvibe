@@ -19,7 +19,10 @@ export const verifyMetaSignature = (req, res, next) => {
     // req.body must be a raw buffer from express.raw()
     const expectedSignature = 'sha256=' + crypto.createHmac('sha256', appSecret).update(req.body).digest('hex');
 
-    if (signature !== expectedSignature) {
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
         console.warn("[Webhook] Invalid signature");
         return res.status(401).send('Invalid signature');
     }

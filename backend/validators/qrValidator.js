@@ -13,7 +13,11 @@ export const metadataSchema = z.record(z.any()).optional();
 export const createQRSchema = z.object({
     target_url: z.string()
         .min(1, "Target URL is required")
-        .trim(),
+        .trim()
+        .refine(
+            (val) => !/^(javascript|data|vbscript):/i.test(val),
+            { message: "Invalid URL scheme. javascript: and data: URLs are not allowed." }
+        ),
     title: z.string().optional(),
     qr_type: z.string().optional(),
     gpsLocationEnabled: z.boolean().optional(),

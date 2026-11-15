@@ -137,14 +137,22 @@ const userSchema = new mongoose.Schema({
     googleReviewUrl: {
         type: String,
         default: null
+    },
+    // Refresh token revocation counter
+    tokenVersion: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true })
 
 // 1. middleware
 userSchema.pre("save", async function () {
     if (!this.isModified("password") || !this.password) return;
-    const salt = await bcrypt.genSalt(5);
+    const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    if (!this.isNew) {
+        this.tokenVersion = (this.tokenVersion || 0) + 1;
+    }
 });
 
 // 2. Insatance methods
@@ -160,7 +168,7 @@ userSchema.methods.generateAccessToken = function () {
 
 // Method to generate a long-lived refresh token
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign({ id: this._id }, env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
+    return jwt.sign({ id: this._id, tokenVersion: this.tokenVersion || 0 }, env.REFRESH_TOKEN_SECRET, { expiresIn: "7d" });
 };
 
 export const User = mongoose.model("User", userSchema);

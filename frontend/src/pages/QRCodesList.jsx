@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Search, ScanLine, Zap, PlusCircle, ChevronDown, QrCode, Download,
-    MoreHorizontal, Loader2, Trash2, Edit2, Calendar, Folder, ExternalLink, PencilLine, Image as ImageIcon,
+    MoreHorizontal, Loader2, Trash2, Edit2, Calendar, ExternalLink, PencilLine, Image as ImageIcon,
     Square, CheckSquare, Palette, ArrowRightLeft, Copy, PauseCircle, PlayCircle, X, Check, Share,
     Globe, FileText, Contact, Share2, MessageCircle, Film,
     PartyPopper, Link as LinkIcon, LogOut, CreditCard, Settings, BarChart3, ChevronRight, Eye,
@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, setActiveQrCount } from '../redux/authSlice';
-import StyledQRCode from './StyledQRCode';
-import UpgradeModal from './UpgradeModal';
+import StyledQRCode from '../components/StyledQRCode';
+import UpgradeModal from '../components/UpgradeModal';
 import api from '../api/axios';
 
 
@@ -1038,13 +1038,7 @@ const QRCodesList = () => {
                                                             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                                                             open link
                                                         </button>
-                                                        <button
-                                                            onClick={() => { alert('Feature coming soon!'); setActiveMenuId(null); }}
-                                                            className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-2"
-                                                        >
-                                                            <Folder className="w-3.5 h-3.5 text-slate-400" />
-                                                            move to folder
-                                                        </button>
+
                                                         <button
                                                             onClick={() => { handleToggleActive(qr); setActiveMenuId(null); }}
                                                             className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-2"
@@ -1154,13 +1148,7 @@ const QRCodesList = () => {
                                     <div className="p-2 bg-slate-100 rounded-lg"><ExternalLink className="w-5 h-5 text-slate-600" /></div>
                                     open link
                                 </button>
-                                <button
-                                    onClick={() => { alert('Feature coming soon!'); setActiveMenuId(null); }}
-                                    className="w-full text-left px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-4 rounded-xl"
-                                >
-                                    <div className="p-2 bg-slate-100 rounded-lg"><Folder className="w-5 h-5 text-slate-600" /></div>
-                                    move to folder
-                                </button>
+
                                 <button
                                     onClick={() => { handleToggleActive(qr); setActiveMenuId(null); }}
                                     className="w-full text-left px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-4 rounded-xl"

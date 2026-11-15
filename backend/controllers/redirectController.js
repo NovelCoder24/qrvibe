@@ -98,10 +98,18 @@ const TOKEN_TTL_MS = 5 * 60 * 1000;
 
 // ── Architecture D: Zero-Prompt Inline Micro-Bridge Template (~900 bytes, <15ms client execution) ──
 export const renderMicroBridgeHtml = ({ shortId, destinationUrl, scanId, telemetryToken }) => {
-    const safeUrl = JSON.stringify(destinationUrl);
+    const cleanDest = destinationUrl && !/^(javascript|data|vbscript):/i.test(destinationUrl.trim())
+        ? destinationUrl.trim()
+        : '#';
+    const safeUrl = JSON.stringify(cleanDest).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
     const safeShortId = encodeURIComponent(shortId);
-    const safeScanId = String(scanId || "").replace(/"/g, "");
-    const safeToken = String(telemetryToken || "").replace(/"/g, "");
+    const safeScanId = String(scanId || "").replace(/[^a-zA-Z0-9_-]/g, "");
+    const safeToken = String(telemetryToken || "").replace(/[^a-zA-Z0-9_-]/g, "");
+    const safeMetaUrl = cleanDest
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Connecting...</title>
@@ -132,16 +140,30 @@ export const renderMicroBridgeHtml = ({ shortId, destinationUrl, scanId, telemet
   window.location.replace(${safeUrl});
 })();
 </script>
-<noscript><meta http-equiv="refresh" content="0;url=${destinationUrl}"></noscript>
+<noscript><meta http-equiv="refresh" content="0;url=${safeMetaUrl}"></noscript>
 </head><body style="background:#0b0f19;"></body></html>`;
 };
 
 // ── DPDP-Compliant Tap-to-Consent GPS Interstitial Template (Fixes 3.1, 3.2, 3.9, 3.10) ──
 export const renderGpsInterstitial = ({ shortId, destinationUrl, title, telemetryToken, scanId }) => {
-    const safeTitle = (title || "Redirecting...").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const safeDest = destinationUrl.replace(/"/g, "&quot;");
-    const safeToken = String(telemetryToken || "").replace(/"/g, "");
-    const safeScanId = String(scanId || "").replace(/"/g, "");
+    const cleanDest = destinationUrl && !/^(javascript|data|vbscript):/i.test(destinationUrl.trim())
+        ? destinationUrl.trim()
+        : '#';
+    const safeTitle = (title || "Redirecting...")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    const safeToken = String(telemetryToken || "").replace(/[^a-zA-Z0-9_-]/g, "");
+    const safeScanId = String(scanId || "").replace(/[^a-zA-Z0-9_-]/g, "");
+    const safeShortId = encodeURIComponent(shortId);
+    const safeHref = cleanDest
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    const safeJsonDest = JSON.stringify(cleanDest).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -264,14 +286,14 @@ export const renderGpsInterstitial = ({ shortId, destinationUrl, title, telemetr
     <p class="subtitle">We use your location to show scans near you and verify regional access. Only city and region are stored.</p>
     <div class="actions">
       <button type="button" class="btn-primary" id="shareBtn">Share location</button>
-      <a href="${safeDest}" class="btn-secondary" id="skipLink">No thanks</a>
+      <a href="${safeHref}" class="btn-secondary" id="skipLink">No thanks</a>
     </div>
   </div>
 
   <script>
     (function() {
-      var dest = "${safeDest}";
-      var shortId = "${shortId}";
+      var dest = ${safeJsonDest};
+      var shortId = "${safeShortId}";
       var token = "${safeToken}";
       var scanId = "${safeScanId}";
       var redirected = false;
@@ -499,6 +521,9 @@ export const redirectQR = async (req, res, deps = {}) => {
 
         // 5. Auto UTM Builder & Campaign Extraction
         let finalUrl = qr.target_url;
+        if (finalUrl && /^(javascript|data|vbscript):/i.test(finalUrl.trim())) {
+            return res.status(400).send("<h1>Invalid destination protocol</h1>");
+        }
         if (finalUrl && !/^https?:\/\//i.test(finalUrl)) {
             finalUrl = "http://" + finalUrl;
         }
@@ -1100,9 +1125,9 @@ export const recordGpsTelemetry = async (req, res, nextOrProcessor) => {
             rtt
         } = body;
 
-        // Require either scanId or telemetryToken
-        if ((!scanId || typeof scanId !== "string") && (!telemetryToken || typeof telemetryToken !== "string")) {
-            return res.status(401).json({ message: "Missing scanId or telemetry token" });
+        // Require single-use telemetryToken for authorization
+        if (!telemetryToken || typeof telemetryToken !== "string") {
+            return res.status(401).json({ message: "Missing telemetry token" });
         }
 
         const isFallbackWan = fallbackWanLookup === true;

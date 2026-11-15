@@ -1,29 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Outlet, useLocation, useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Outlet, Navigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { loadUser } from './redux/authSlice';
 import { Loader2 } from 'lucide-react';
 
-import QRCodesList from './components/QRCodesList.jsx';
-import DashboardOverview from './components/DashboardOverview.jsx';
 import PrivateRoute from './components/PrivateRoute.jsx';
-import DashboardLayout from './components/layout/DashboardLayout.jsx';
 
+const DashboardOverview = React.lazy(() => import('./pages/DashboardOverview.jsx'));
+const QRCodesList = React.lazy(() => import('./pages/QRCodesList.jsx'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage.jsx'));
 const RegisterPage = React.lazy(() => import('./pages/RegisterPage.jsx'));
-const CreateQRPage = React.lazy(() => import('./pages/create/CreateQRPage.jsx'));
 const LandingPage = React.lazy(() => import('./pages/LandingPage.jsx'));
 const QRDetailPage = React.lazy(() => import('./pages/QRDetailPage.jsx'));
-const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage.jsx'));
 const AccountPage = React.lazy(() => import('./pages/AccountPage.jsx'));
 const BillingPage = React.lazy(() => import('./pages/BillingPage.jsx'));
-const PrivacyDataPage = React.lazy(() => import('./pages/PrivacyDataPage.jsx'));
-const PDFViewPage = React.lazy(() => import('./pages/PDFViewPage.jsx'));
-const VCardViewPage = React.lazy(() => import('./pages/VCardViewPage.jsx'));
-const SocialViewPage = React.lazy(() => import('./pages/SocialViewPage.jsx'));
-const MediaViewPage = React.lazy(() => import('./pages/MediaViewPage.jsx'));
 const MenuViewPage = React.lazy(() => import('./pages/MenuViewPage.jsx'));
-const FoldersPage = React.lazy(() => import('./pages/FoldersPage.jsx'));
 const StandeeActivationPage = React.lazy(() => import('./pages/StandeeActivationPage.jsx'));
 
 import TrialWarningBanner from './components/TrialWarningBanner.jsx';
@@ -48,28 +39,20 @@ const ShortLinkRedirect = () => {
   );
 };
 
-const MainDashboardLayout = () => (
-  <DashboardLayout>
+const ProtectedLayout = () => (
+  <div className="min-h-screen bg-[#FBF9F6] text-[#2B1E19]">
     <TrialWarningBanner />
     <TrialExpiredModal />
     <Outlet />
-  </DashboardLayout>
+  </div>
 );
 
 const App = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const dispatch = useDispatch();
-  const location = useLocation();
-
-  useEffect(() => {
-    setIsSidebarOpen(false);
-  }, [location]);
 
   useEffect(() => {
     dispatch(loadUser());
   }, [dispatch]);
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -82,34 +65,33 @@ const App = () => {
         </div>
       }>
         <Routes>
+          {/* Public Storefront & Marketing Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/q/:shortId" element={<ShortLinkRedirect />} />
           <Route path="/r/:shortId" element={<ShortLinkRedirect />} />
-          <Route path="/pdf/:shortId" element={<PDFViewPage />} />
-          <Route path="/vcard/:shortId" element={<VCardViewPage />} />
-          <Route path="/social/:shortId" element={<SocialViewPage />} />
-          <Route path="/media/:shortId" element={<MediaViewPage />} />
           <Route path="/menu/:shortId" element={<MenuViewPage />} /> 
           <Route path="/s/:shortId" element={<MenuViewPage />} /> 
           <Route path="/activate" element={<StandeeActivationPage />} />
           <Route path="/activate/:code" element={<StandeeActivationPage />} />
 
+          {/* Protected Storefront Dashboard & Management Routes */}
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<DashboardOverview />} />
-            <Route element={<MainDashboardLayout />}>
-              <Route path="/create" element={<CreateQRPage />} />
-
+            <Route element={<ProtectedLayout />}>
               <Route path="/qrcodes" element={<QRCodesList />} />
               <Route path="/qrcodes/:id" element={<QRDetailPage />} />
-              <Route path="/folders" element={<FoldersPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/billing" element={<BillingPage />} />
               <Route path="/account" element={<AccountPage />} />
-              <Route path="/privacy-data" element={<PrivacyDataPage />} />
+              {/* Legacy aliases redirecting smoothly to Storefront Dashboard */}
+              <Route path="/create" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/analytics" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </React.Suspense>
     </div>
@@ -117,4 +99,3 @@ const App = () => {
 };
 
 export default App;
-

@@ -4,7 +4,6 @@ import { QRCode } from "../models/QRCode.js";
 import { Scan } from "../models/Scan.js";
 import { DailyScanStats } from "../models/DailyScanStats.js";
 import { AlertEvent } from "../models/AlertEvent.js";
-import { ConsentRecord } from "../models/ConsentRecord.js";
 import { Notification } from "../models/Notification.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -16,7 +15,7 @@ import { getPlanLimits } from "../config/planConfig.js";
 // Helper: Cookie options for refresh token
 const REFRESH_COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/",
@@ -205,7 +204,7 @@ export const googleAuth = async (req, res) => {
         });
         res.status(500).json({
             message: "Google authentication failed",
-            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            error: env.NODE_ENV === 'development' ? error.message : 'Internal server error'
         });
     }
 };
@@ -228,6 +227,12 @@ export const refreshToken = async (req, res) => {
             return res.status(401).json({ message: "User not found" });
         }
 
+        // Verify token revocation status via tokenVersion
+        if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== (user.tokenVersion || 0)) {
+            res.clearCookie("refreshToken", REFRESH_COOKIE_OPTIONS);
+            return res.status(401).json({ message: "Refresh token has been revoked" });
+        }
+
         await ensurePlanLimitsSync(user);
         // Issue a new token pair (rotate refresh token for extra security)
         await sendTokens(res, user);
@@ -238,10 +243,23 @@ export const refreshToken = async (req, res) => {
     }
 };
 
-// @desc    Logout user (clear refresh token cookie)
+// @desc    Logout user (clear refresh token cookie and invalidate tokenVersion)
 // @route   POST /api/users/logout
 // @access  Public
 export const logoutUser = async (req, res) => {
+    try {
+        const token = req.cookies?.refreshToken;
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, env.REFRESH_TOKEN_SECRET);
+                if (decoded?.id) {
+                    await User.findByIdAndUpdate(decoded.id, { $inc: { tokenVersion: 1 } });
+                }
+            } catch (_) {
+                // Ignore expired or invalid token decoding during logout
+            }
+        }
+    } catch (_) {}
     res.clearCookie("refreshToken", REFRESH_COOKIE_OPTIONS);
     res.json({ message: "Logged out successfully" });
 };
@@ -304,7 +322,10 @@ export const updateProfile = async (req, res) => {
             if (req.body.businessCategory !== undefined) {
                 const validCats = ['salon', 'cafe', 'clinic'];
                 if (validCats.includes(req.body.businessCategory)) {
-                    user.businessCategory = req.body.businessCategory;
+                    // Business category is permanent once chosen during onboarding
+                    if (!user.businessCategory) {
+                        user.businessCategory = req.body.businessCategory;
+                    }
                 }
             }
             if (req.body.googleReviewUrl !== undefined) {
@@ -405,9 +426,7 @@ export const updatePrivacySettings = async (req, res) => {
             });
         }
 
-        if (consentEntries.length > 0) {
-            await ConsentRecord.insertMany(consentEntries);
-        }
+        // ConsentRecord removed as part of pivot to in-store review funnel
 
         const updatedUser = await user.save();
         res.json({
@@ -427,11 +446,7 @@ export const updatePrivacySettings = async (req, res) => {
 // @access  Private
 export const getConsentHistory = async (req, res) => {
     try {
-        const records = await ConsentRecord.find({ user_id: req.user._id })
-            .sort({ createdAt: -1 })
-            .limit(50)
-            .lean();
-        res.json(records);
+        res.json([]);
     } catch (error) {
         console.error("Get Consent History Error:", error);
         res.status(500).json({ message: "Failed to load consent history" });
@@ -451,10 +466,9 @@ export const exportUserData = async (req, res) => {
 
         // Fetch remaining associated data using Promise.all for speed
         // NOTE: We intentionally OMIT raw `Scan` collection to prevent OOM crashes on large accounts.
-        const [qrcodes, dailyStats, consents] = await Promise.all([
+        const [qrcodes, dailyStats] = await Promise.all([
             QRCode.find({ user_id: userId }).lean(),
-            DailyScanStats.find({ qr_id: { $in: await QRCode.find({ user_id: userId }).distinct('_id') } }).lean(),
-            ConsentRecord.find({ user_id: userId }).lean()
+            DailyScanStats.find({ qr_id: { $in: await QRCode.find({ user_id: userId }).distinct('_id') } }).lean()
         ]);
 
         const profileData = [{
@@ -481,17 +495,7 @@ export const exportUserData = async (req, res) => {
             UniqueScans: stat.unique_scans
         }));
 
-        const consentData = consents.map(consent => ({
-            Type: consent.consentType,
-            Granted: consent.granted,
-            Timestamp: consent.createdAt
-        }));
-
-        // Convert to CSV
-        const profileCsv = json2csv(profileData);
-        const qrCsv = qrData.length ? json2csv(qrData) : '';
-        const scanStatsCsv = scanStatsData.length ? json2csv(scanStatsData) : '';
-        const consentCsv = consentData.length ? json2csv(consentData) : '';
+        
 
         // Prepare ZIP stream
         res.setHeader('Content-Type', 'application/zip');
@@ -508,7 +512,7 @@ export const exportUserData = async (req, res) => {
         archive.append(profileCsv, { name: 'profile.csv' });
         if (qrCsv) archive.append(qrCsv, { name: 'qrcodes.csv' });
         if (scanStatsCsv) archive.append(scanStatsCsv, { name: 'scan_stats.csv' });
-        if (consentCsv) archive.append(consentCsv, { name: 'consent_history.csv' });
+        
 
         await archive.finalize();
 
@@ -541,8 +545,15 @@ export const requestDataErasure = async (req, res) => {
             if (!isMatch) {
                 return res.status(401).json({ message: "Incorrect password." });
             }
+        } else {
+            // For OAuth users (Google etc.): require explicit confirmation challenge to prevent accidental or CSRF/XSS-induced deletion
+            const { confirmDelete } = req.body;
+            if (confirmDelete !== 'DELETE') {
+                return res.status(400).json({
+                    message: "Please confirm account deletion by passing confirmDelete: 'DELETE'."
+                });
+            }
         }
-        // For Google OAuth users: no password exists, skip the check
 
         const userQRs = await QRCode.find({ user_id: userId }).distinct('_id');
 
@@ -554,7 +565,6 @@ export const requestDataErasure = async (req, res) => {
             DailyScanStats.deleteMany({ qr_id: { $in: userQRs } }),
             AlertEvent.deleteMany({ qr_id: { $in: userQRs } }),
             QRCode.deleteMany({ user_id: userId }),
-            ConsentRecord.deleteMany({ user_id: userId }),
             Notification.deleteMany({ user_id: userId })
         ]);
 

@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { Menu, X, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const LandingPage = () => {
     const { isAuthenticated } = useSelector((state) => state.auth);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const whatsappOrderUrl = "https://wa.me/?text=" + encodeURIComponent("Hi, I want a QRVibe standee for my storefront");
     const whatsappTalkUrl = "https://wa.me/?text=" + encodeURIComponent("Hi, I have a question about QRVibe");
@@ -12,11 +14,22 @@ const LandingPage = () => {
         window.scrollTo(0, 0);
     }, []);
 
+    useEffect(() => {
+        if (mobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [mobileMenuOpen]);
+
     return (
         <div className="lp min-h-screen">
             {/* Navigation */}
-            <header className="nav">
-                <Link className="brand" to="/">
+            <header className="nav relative z-50">
+                <Link className="brand" to="/" onClick={() => setMobileMenuOpen(false)}>
                     <svg width="24" height="24" viewBox="0 0 22 22" aria-hidden="true">
                         <rect x="1" y="1" width="8" height="8" rx="2" fill="#E5A93C" />
                         <rect x="13" y="1" width="8" height="8" rx="2" fill="currentColor" />
@@ -42,7 +55,7 @@ const LandingPage = () => {
                     )}
 
                     <a
-                        className="btn hn text-xs sm:text-sm"
+                        className="btn hn hidden sm:inline-flex text-xs sm:text-sm"
                         href={whatsappOrderUrl}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -50,8 +63,131 @@ const LandingPage = () => {
                     >
                         Get your standee
                     </a>
+
+                    {/* Mobile Hamburger Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="sm:hidden p-2 -mr-1 rounded-lg text-[#2B1E19] hover:bg-[#2B1E19]/5 transition-colors focus:outline-none"
+                        aria-label="Toggle navigation menu"
+                        aria-expanded={mobileMenuOpen}
+                    >
+                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
                 </div>
             </header>
+
+            {/* Mobile Navigation Drawer Overlay */}
+            {mobileMenuOpen && (
+                <div
+                    className="sm:hidden fixed inset-0 z-40 bg-[#2B1E19]/60 backdrop-blur-sm animate-fadeIn"
+                    onClick={() => setMobileMenuOpen(false)}
+                >
+                    <div
+                        className="fixed inset-y-0 right-0 w-full max-w-[320px] bg-[#FBF9F6] shadow-2xl p-6 flex flex-col justify-between overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between pb-4 border-b border-[#E3DAD0]">
+                                <div className="flex items-center gap-2 font-serif text-xl font-medium text-[#2B1E19]">
+                                    <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true">
+                                        <rect x="1" y="1" width="8" height="8" rx="2" fill="#E5A93C" />
+                                        <rect x="13" y="1" width="8" height="8" rx="2" fill="currentColor" />
+                                        <rect x="1" y="13" width="8" height="8" rx="2" fill="currentColor" />
+                                        <rect x="13" y="13" width="4" height="4" fill="#E5A93C" />
+                                    </svg>
+                                    <span>QRVibe</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="p-1 rounded-full text-[#6B5A50] hover:text-[#2B1E19] hover:bg-[#2B1E19]/5"
+                                    aria-label="Close menu"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <nav className="flex flex-col space-y-4">
+                                <a
+                                    href="#how-it-works"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="text-base font-medium text-[#2B1E19] hover:text-[#E5A93C] transition-colors py-1 flex items-center justify-between"
+                                >
+                                    <span>How it works</span>
+                                    <ArrowRight size={16} className="text-[#A39284]" />
+                                </a>
+                                <a
+                                    href="#who"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="text-base font-medium text-[#2B1E19] hover:text-[#E5A93C] transition-colors py-1 flex items-center justify-between"
+                                >
+                                    <span>Who it is for</span>
+                                    <ArrowRight size={16} className="text-[#A39284]" />
+                                </a>
+                                <a
+                                    href="#pricing"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="text-base font-medium text-[#2B1E19] hover:text-[#E5A93C] transition-colors py-1 flex items-center justify-between"
+                                >
+                                    <span>Pricing</span>
+                                    <ArrowRight size={16} className="text-[#A39284]" />
+                                </a>
+                            </nav>
+
+                            <div className="pt-4 border-t border-[#E3DAD0] space-y-3">
+                                {isAuthenticated ? (
+                                    <Link
+                                        to="/dashboard"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="w-full inline-flex items-center justify-center font-medium text-sm px-4 py-2.5 rounded-xl border border-[#2B1E19] text-[#2B1E19] bg-[#2B1E19]/5 hover:bg-[#2B1E19]/10 transition-all text-center"
+                                    >
+                                        Go to Dashboard
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <Link
+                                            to="/login"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="w-full inline-flex items-center justify-center font-medium text-sm px-4 py-2.5 rounded-xl border border-[#2B1E19] text-[#2B1E19] hover:bg-[#2B1E19]/5 transition-all text-center"
+                                        >
+                                            Log In to Storefront
+                                        </Link>
+                                        <Link
+                                            to="/register"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="w-full inline-flex items-center justify-center font-medium text-sm px-4 py-2.5 rounded-xl border border-[#6B5A50] text-[#6B5A50] hover:border-[#2B1E19] hover:text-[#2B1E19] transition-all text-center"
+                                        >
+                                            Start 7-Day Free Trial
+                                        </Link>
+                                    </>
+                                )}
+
+                                <a
+                                    href={whatsappOrderUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="btn hn w-full inline-flex items-center justify-center text-sm font-medium py-2.5 rounded-xl shadow-sm text-center"
+                                    style={{ minHeight: '44px' }}
+                                >
+                                    Get your standee
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-[#E3DAD0] text-xs text-[#6B5A50] space-y-2">
+                            <div className="flex items-center gap-1.5 text-[#2B1E19] font-medium">
+                                <ShieldCheck size={14} className="text-[#10B981]" />
+                                <span>Anti-Hostageware Guarantee</span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed">
+                                Your printed QR codes never break. Designed around India's DPDP Act.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section */}
             <section className="hero w">

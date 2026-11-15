@@ -1,11 +1,14 @@
 import cron from 'node-cron';
 import axios from 'axios';
+import dns from 'dns';
 import { QRCode } from '../models/QRCode.js';
 import { User } from '../models/User.js';
 import { Scan } from '../models/Scan.js';
 import { withJobLock } from '../utils/jobLock.js';
 import { sendHealthAlert, sendRecoveryAlert, sendOverageWarningEmail } from '../services/AlertService.js';
 import { getPlanLimits } from '../config/planConfig.js';
+import { isPrivateIp } from '../services/Geolocation.js';
+import { env } from '../config/env.js';
 
 const HEALTH_PING_HEADERS = { 'User-Agent': 'QRVibe-HealthBot/1.0' };
 const HEALTH_PING_TIMEOUT_MS = 8000;
@@ -13,26 +16,96 @@ const CONCURRENCY_LIMIT = 10;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const pingUrlOnce = async (targetUrl, httpClient = axios) => {
+/**
+ * Validates that a target URL is public and safe to ping, preventing SSRF attacks
+ * against loopback (127.0.0.1), cloud metadata (169.254.169.254), or internal VPC subnets.
+ */
+export const isBlockedHostOrIp = async (urlString) => {
     try {
-        await httpClient.head(targetUrl, {
-            timeout: HEALTH_PING_TIMEOUT_MS,
-            maxRedirects: 3,
-            validateStatus: (status) => status >= 200 && status < 400,
-            headers: HEALTH_PING_HEADERS
-        });
+        if (!urlString || typeof urlString !== 'string') {
+            return { blocked: true, reason: 'Invalid URL' };
+        }
+        const parsed = new URL(urlString);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            return { blocked: true, reason: 'Only HTTP/HTTPS protocols are allowed' };
+        }
+        const hostname = parsed.hostname.toLowerCase();
+        if (!hostname) {
+            return { blocked: true, reason: 'Missing hostname' };
+        }
+        if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '127.0.0.1' || hostname === '::1' || hostname === '0.0.0.0') {
+            return { blocked: true, reason: 'Restricted loopback host' };
+        }
+        if (
+            hostname === '169.254.169.254' ||
+            hostname === 'metadata.google.internal' ||
+            hostname.includes('metadata.azure') ||
+            hostname.includes('instance-data')
+        ) {
+            return { blocked: true, reason: 'Restricted cloud metadata service' };
+        }
+        if (isPrivateIp(hostname)) {
+            return { blocked: true, reason: 'Restricted private network IP' };
+        }
+        if (env.NODE_ENV !== 'test') {
+            try {
+                const lookup = await dns.promises.lookup(hostname);
+                if (lookup && lookup.address && isPrivateIp(lookup.address)) {
+                    return { blocked: true, reason: 'Resolved to restricted private IP' };
+                }
+            } catch (_) {
+                // Ignore DNS resolution error here; network check will fail normally
+            }
+        }
+        return { blocked: false };
+    } catch (_) {
+        return { blocked: true, reason: 'Malformed URL' };
+    }
+};
+
+export const pingUrlOnce = async (targetUrl, httpClient = axios) => {
+    const safetyCheck = await isBlockedHostOrIp(targetUrl);
+    if (safetyCheck.blocked) {
+        return { success: false, errorReason: `SSRF Blocked: ${safetyCheck.reason}` };
+    }
+
+    const axiosOptions = {
+        timeout: HEALTH_PING_TIMEOUT_MS,
+        maxRedirects: 3,
+        validateStatus: (status) => status >= 200 && status < 400,
+        headers: HEALTH_PING_HEADERS,
+        beforeRedirect: (options) => {
+            const dest = options.href || (options.protocol + '//' + options.hostname + options.path);
+            try {
+                const parsed = new URL(dest);
+                const host = parsed.hostname.toLowerCase();
+                if (
+                    host === 'localhost' ||
+                    host === '127.0.0.1' ||
+                    host === '169.254.169.254' ||
+                    host === 'metadata.google.internal' ||
+                    isPrivateIp(host)
+                ) {
+                    throw new Error('SSRF Blocked: Target redirect to private address rejected');
+                }
+            } catch (err) {
+                throw new Error('SSRF Blocked: Invalid redirect destination');
+            }
+        }
+    };
+
+    try {
+        await httpClient.head(targetUrl, axiosOptions);
         return { success: true, errorReason: null };
     } catch (headError) {
+        if (headError.message && headError.message.includes('SSRF Blocked')) {
+            return { success: false, errorReason: headError.message };
+        }
         const status = headError.response?.status;
         // Many servers block or reject HEAD with 403/405/501 — fallback to GET
         if (status === 405 || status === 403 || status === 501 || !headError.response) {
             try {
-                await httpClient.get(targetUrl, {
-                    timeout: HEALTH_PING_TIMEOUT_MS,
-                    maxRedirects: 3,
-                    validateStatus: (s) => s >= 200 && s < 400,
-                    headers: HEALTH_PING_HEADERS
-                });
+                await httpClient.get(targetUrl, axiosOptions);
                 return { success: true, errorReason: null };
             } catch (getError) {
                 const errorReason = getError.response

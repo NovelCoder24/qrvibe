@@ -3,6 +3,7 @@ import { QRCode } from "../models/QRCode.js";
 import { DailyScanStats } from "../models/DailyScanStats.js";
 import { FeedbackEvent } from "../models/FeedbackEvent.js";
 import { resolveWanLocation } from "../services/ReverseGeocode.js";
+import { env } from "../config/env.js";
 
 // Helper to generate zero-filled dates array
 const generateZeroFilledDates = (days) => {
@@ -142,7 +143,7 @@ const resolveLocationsWithScanFallback = async (locationCounts, qrIds, limit = 1
         }
 
         // Self-heal stranded "Unknown" scans (e.g. from local dev / prior un-enriched telemetry)
-        if (topLocations.length > 0 && process.env.NODE_ENV !== 'test') {
+        if (topLocations.length > 0 && env.NODE_ENV !== 'test') {
             const wanLoc = await resolveWanLocation();
             if (wanLoc && wanLoc.city && wanLoc.city !== 'Unknown') {
                 const totalUnknown = topLocations.reduce((acc, item) => acc + (item.count || 0), 0) || 1;
@@ -375,7 +376,8 @@ export const getAnalyticsTable = async (req, res) => {
 
         const filter = { user_id: userId };
         if (search.trim()) {
-            filter['metadata.title'] = { $regex: search.trim(), $options: 'i' };
+            const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filter['metadata.title'] = { $regex: escapedSearch, $options: 'i' };
         }
 
         const sortMap = {

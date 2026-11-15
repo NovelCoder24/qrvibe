@@ -10,7 +10,7 @@ const router = express.Router();
 
 const menuPhotoUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024, files: 8 }
+    limits: { fileSize: 5 * 1024 * 1024, files: 4 }
 });
 
 const handleMenuPhotoUpload = (req, res, next) => {

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { LRUCache } from "lru-cache";
 import { getLocationAsync } from "./Geolocation.js";
+import { env } from "../config/env.js";
 
 // Cache reverse geocode results clustered to ~1.1km (2 decimal places) for 7 days
 const geoCache = new LRUCache({ max: 5000, ttl: 1000 * 60 * 60 * 24 * 7 });
@@ -399,14 +400,14 @@ export async function reverseGeocode(latitude, longitude, options = {}) {
         }
       }
     } catch (apiErr) {
-      if (process.env.NODE_ENV !== "test") {
+      if ((process.env.NODE_ENV || env.NODE_ENV) !== "test") {
         console.warn(`[ReverseGeocode] BigDataCloud failed (${apiErr.message}).`);
       }
     }
 
     // 2. Secondary Fallback (Development / Non-Production ONLY): OpenStreetMap Nominatim
     // Nominatim public usage policy strictly prohibits production bulk usage (max 1 req/s).
-    if (process.env.NODE_ENV !== "production") {
+    if ((process.env.NODE_ENV || env.NODE_ENV) !== "production") {
       try {
         const { data } = await fetcher("https://nominatim.openstreetmap.org/reverse", {
           params: {

@@ -166,3 +166,21 @@ test('sendHealthAlert & sendRecoveryAlert — Smart cooldown (status=sent only),
         Notification.updateMany = origUpdateManyNotif;
     }
 });
+
+test('pingUrlOnce — blocks SSRF requests to cloud metadata, loopback, and private IPs', async () => {
+    const maliciousUrls = [
+        'http://169.254.169.254/latest/meta-data',
+        'http://localhost:3000/secret',
+        'http://127.0.0.1:27017/db',
+        'http://10.0.0.5/admin',
+        'http://192.168.1.1/router',
+        'file:///etc/passwd',
+        'gopher://127.0.0.1:6379/_flushall'
+    ];
+
+    for (const url of maliciousUrls) {
+        const res = await pingUrlOnce(url);
+        assert.equal(res.success, false, `Expected ${url} to be blocked by SSRF filter`);
+        assert.ok(res.errorReason.includes('SSRF Blocked') || res.errorReason.includes('Blocked URL'), `Expected SSRF error reason for ${url}, got: ${res.errorReason}`);
+    }
+});

@@ -18,9 +18,9 @@ import {
 } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/UI/card"
-import { Button } from "@/components/UI/button"
-import { Badge } from "@/components/UI/badge"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 import api from "../api/axios"
