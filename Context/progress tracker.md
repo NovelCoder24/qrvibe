@@ -65,6 +65,12 @@ Build out QRVibe as the **In-Store Digital Front-Desk & Google Review Engine for
   - **Verification:**
     - 131/131 backend tests pass (`node --test backend/tests/*.test.js`).
     - Vite production build succeeds with 0 errors (`npm run build --prefix frontend`).
+- **AI Rate Card Vision Reader & Unsplash Service Image Catalog Integration:**
+  - Connected `readRateCard(file)` in `DashboardOverview.jsx` directly to `parseMenuPhotos` (`POST /api/qrcodes/parse-menu-photo`), feeding Gemini Multimodal Vision with `businessCategory: storefront.type` and `autoFillPhotos: true`.
+  - Created client-side `frontend/src/utils/imageCatalog.js` providing curated Unsplash CDN URLs across Hair (Keratin, Balayage, Cuts), Skin (HydraFacial, Glow, Peels), Bridal, Nails & Lashes, Grooming, and Spa, plus Cafe & Clinic staples.
+  - Automatically enriches default services (`DEF`) and existing `localStorage` data with matching Unsplash imagery.
+  - Rendered rich photo cards in Tab 1 (Lookbook & Offers), Service Editor modal (with 1-tap "✨ Match best Unsplash photo"), Rate Card OCR staging drawer, and the Guest Preview drawer.
+  - Replaced mock demo disclaimer with dynamic AI extraction status and thumbnail previews for each parsed item.
 - **Menu Templates & Review Funnel Optimization:**
   - **Single-Screen Viewport Registration & Onboarding (`RegisterPage.jsx` & `index.css`):**
     - Compacted registration layout to fit completely within standard desktop/laptop viewports without irrelevant scrolling:

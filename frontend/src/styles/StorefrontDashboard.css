@@ -1043,7 +1043,7 @@
 
 .sf-dash .stg {
   display: grid;
-  grid-template-columns: 1.3fr 1fr 80px 24px;
+  grid-template-columns: 42px 1.3fr 1fr 80px 24px;
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
@@ -1455,7 +1455,7 @@
     grid-template-columns: 1fr !important;
   }
   .sf-dash .stg {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 42px 1fr 1fr;
   }
   .sf-dash .wz {
     padding: 12px 10px;

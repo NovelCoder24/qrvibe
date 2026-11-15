@@ -1976,9 +1976,14 @@ path, .k { fill: var(--ink); }
             {isStagingReading ? (
               <>
                 <div className="shh">
-                  <h2>Reading your rate card…</h2>
+                  <h2>Reading your rate card with AI…</h2>
                 </div>
-                <div className="snap scan" style={{ minHeight: '90px' }} />
+                <div className="snap scan" style={{ minHeight: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>📸 ✨</div>
+                    <b>Extracting services, prices &amp; pairing Unsplash photos…</b>
+                  </div>
+                </div>
               </>
             ) : (
               <>
@@ -1986,13 +1991,29 @@ path, .k { fill: var(--ink); }
                   <h2>Review before saving</h2>
                   <button className="link" onClick={() => setActiveSheet(null)}>Close</button>
                 </div>
-                {isStagingDemo && (
+                {isStagingDemo ? (
                   <div className="note">
-                    Demo result: these items are samples, not read from your photo. Connect readRateCard() to your menu reader.
+                    Showing sample preview items. Snap a real rate card photo to extract with Gemini AI.
+                  </div>
+                ) : (
+                  <div className="note" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#15803d', borderColor: 'rgba(34, 197, 94, 0.25)' }}>
+                    ✨ AI Extracted {stagedRows.length} services from rate card. Photos paired automatically from Unsplash.
                   </div>
                 )}
                 {stagedRows.map((r, i) => (
-                  <div className="stg" key={i}>
+                  <div className="stg" key={i} style={{ gridTemplateColumns: '42px 1.2fr 1fr 75px 24px' }}>
+                    <div
+                      className="ph has"
+                      style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '8px',
+                        backgroundImage: `url(${r.img || findCatalogImage(r.n, r.c, storefront.type)})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        border: '1px solid var(--border)'
+                      }}
+                    />
                     <input
                       className="sm"
                       value={r.n}
@@ -2001,7 +2022,11 @@ path, .k { fill: var(--ink); }
                         const val = e.target.value;
                         setStagedRows(prev => {
                           const copy = [...prev];
-                          copy[i] = { ...copy[i], n: val };
+                          copy[i] = {
+                            ...copy[i],
+                            n: val,
+                            img: copy[i].img || findCatalogImage(val, copy[i].c, storefront.type)
+                          };
                           return copy;
                         });
                       }}
@@ -2213,8 +2238,21 @@ path, .k { fill: var(--ink); }
 
               <div className="lbl" style={{ margin: '16px 0 6px' }}>{v.t2}</div>
               {services.filter(s => s.av).slice(0, 4).map((s, idx) => (
-                <div className="gs" key={s.n + idx}>
-                  <span>{s.n}{s.sig ? ' ★' : ''}</span>
+                <div className="gs" key={s.n + idx} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {s.img && (
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundImage: `url(${s.img})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        flexShrink: 0
+                      }}
+                    />
+                  )}
+                  <span style={{ flex: 1 }}>{s.n}{s.sig ? ' ★' : ''}</span>
                   <b>{formatSvcPrice(s)}</b>
                 </div>
               ))}
